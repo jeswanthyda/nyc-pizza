@@ -207,7 +207,7 @@ class PizzaDeliveryGame(arcade.Window):
 
     def on_update(self, delta_time):
         """Movement and game logic."""
-        self.player_list.update()
+        self.player_list.update(delta_time)
 
     def handle_space_action(self):
         """Handle space bar action for pizza pickup and dropoff."""

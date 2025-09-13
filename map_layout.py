@@ -72,6 +72,12 @@ class BaseLocation(arcade.Sprite):
 
         self.rectangle = self.address.to_arcade_rect()
 
+        # Set sprite properties for collision detection
+        self.center_x = self.rectangle.center_x
+        self.center_y = self.rectangle.center_y
+        self.width = self.rectangle.width
+        self.height = self.rectangle.height
+
     def draw(self):
         """Draw the location as a rectangle."""
         arcade.draw_rect_filled(self.rectangle, self.text_color)
