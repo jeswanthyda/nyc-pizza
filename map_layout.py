@@ -38,7 +38,7 @@ class Address:
 
     def to_arcade_rect(self) -> arcade.Rect:
         """
-        Convert avenue/street numbers to arcade.LBWH.
+        Convert avenue/street numbers to arcade.Rect.
 
         Returns:
             arcade.Rect: Rectangle object to be rendered by arcade.
@@ -162,7 +162,9 @@ class Home(BaseLocation):
 def draw_manhattan_map():
     """Draw the Manhattan street grid."""
     # Draw background (city blocks)
-    background_rect = arcade.LBWH(MAP_OFFSET_X, MAP_OFFSET_Y, MAP_WIDTH, MAP_HEIGHT)
+    background_rect = arcade.LRBT(
+        MAP_OFFSET_X, MAP_OFFSET_X + MAP_WIDTH, MAP_OFFSET_Y, MAP_OFFSET_Y + MAP_HEIGHT
+    )
     arcade.draw_rect_filled(background_rect, arcade.color.LIGHT_GRAY)
 
     # Draw avenues (vertical streets)
@@ -180,12 +182,15 @@ def draw_manhattan_map():
         )
 
     # Draw Hudson River (blue rectangle on the left)
-    hudson_rect = arcade.LBWH(0, MAP_OFFSET_Y, MAP_OFFSET_X, MAP_HEIGHT)
+    hudson_rect = arcade.LRBT(0, MAP_OFFSET_X, MAP_OFFSET_Y, MAP_OFFSET_Y + MAP_HEIGHT)
     arcade.draw_rect_filled(hudson_rect, arcade.color.TEAL_BLUE)
 
     # Draw East River (blue rectangle on the right)
-    east_rect = arcade.LBWH(
-        MAP_OFFSET_X + MAP_WIDTH, MAP_OFFSET_Y, MAP_OFFSET_X, MAP_HEIGHT
+    east_rect = arcade.LRBT(
+        MAP_OFFSET_X + MAP_WIDTH,
+        MAP_OFFSET_X + MAP_WIDTH + MAP_OFFSET_X,
+        MAP_OFFSET_Y,
+        MAP_OFFSET_Y + MAP_HEIGHT,
     )
     arcade.draw_rect_filled(east_rect, arcade.color.TEAL_BLUE)
 
