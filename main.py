@@ -105,6 +105,7 @@ class PizzaDeliveryGame(arcade.Window):
         # Game objects
         self.player_character = None
         self.joes_pizza = None
+        self.papas_pizza = None
         self.home = None
         self.score = 0
 
@@ -114,12 +115,14 @@ class PizzaDeliveryGame(arcade.Window):
 
     def _setup_pizza_shops(self):
         """Setup the pizza shops."""
-        self.joes_pizza = PizzaShop(Address(3, 6), "Joe's Pizza")
+        self.joes_pizza = PizzaShop(Address(3, 6, "Joe's Pizza"))
+        self.papas_pizza = PizzaShop(Address(7, 12, "Papa's Pizza"))
         self.location_list.append(self.joes_pizza)
+        self.location_list.append(self.papas_pizza)
 
     def _setup_homes(self):
         """Setup the homes."""
-        self.home = Home(Address(8, 8), "Home")
+        self.home = Home(Address(8, 8, "Home"))
         self.location_list.append(self.home)
 
     def setup(self):
@@ -172,7 +175,7 @@ class PizzaDeliveryGame(arcade.Window):
         # Draw instructions
         if not self.player_character.has_pizza:
             arcade.draw_text(
-                "Go to Joe's Pizza (RED) and press SPACE to pick up pizza!",
+                "Go to Joe's Pizza or Papa's Pizza (RED) and press SPACE to pick up pizza!",
                 10,
                 30,
                 arcade.color.BLACK,
@@ -213,12 +216,21 @@ class PizzaDeliveryGame(arcade.Window):
         """Handle space bar action for pizza pickup and dropoff."""
         # Check for pizza pickup using distance-based collision detection
         if not self.player_character.has_pizza:
-            distance = arcade.get_distance_between_sprites(
+            # Check distance to Joe's Pizza
+            distance_joes = arcade.get_distance_between_sprites(
                 self.player_character, self.joes_pizza
             )
-            if distance < 40:  # Collision threshold
+            # Check distance to Papa's Pizza
+            distance_papas = arcade.get_distance_between_sprites(
+                self.player_character, self.papas_pizza
+            )
+
+            if distance_joes < 40:  # Collision threshold
                 self.player_character.has_pizza = True
                 print("Pizza picked up from Joe's Pizza!")
+            elif distance_papas < 40:  # Collision threshold
+                self.player_character.has_pizza = True
+                print("Pizza picked up from Papa's Pizza!")
 
         # Check for pizza delivery using distance-based collision detection
         elif self.player_character.has_pizza:

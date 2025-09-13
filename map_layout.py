@@ -23,11 +23,13 @@ class Address:
         self,
         avenue_number: int,
         street_number: int,
+        name: str = "",
         avenues_spread: int = 1,
         streets_spread: int = 5,
     ):
         self.avenue_number = avenue_number
         self.street_number = street_number
+        self.name = name
         self.avenues_spread = avenues_spread
         self.streets_spread = streets_spread
 
@@ -54,20 +56,18 @@ class Address:
 class BaseLocation(arcade.Sprite):
     """Base class for all locations in the game."""
 
-    def __init__(self, address: Address, name: str, text_color: arcade.color.Color):
+    def __init__(self, address: Address, text_color: arcade.color.Color):
         """
         Initialize a location.
 
         Args:
             address: Address of the location
-            name (str): Name of the location
             text_color: Arcade color for the location
         """
         # Initialize arcade.Sprite first
         super().__init__()
 
         self.address = address
-        self.name = name
         self.text_color = text_color
 
         self.rectangle = self.address.to_arcade_rect()
@@ -84,7 +84,7 @@ class BaseLocation(arcade.Sprite):
         # If height is greater than width, draw the text vertically
         if self.rectangle.height > self.rectangle.width:
             arcade.draw_text(
-                self.name,
+                self.address.name,
                 self.rectangle.center_x,
                 self.rectangle.center_y,
                 arcade.color.WHITE,
@@ -96,7 +96,7 @@ class BaseLocation(arcade.Sprite):
             )
         else:
             arcade.draw_text(
-                self.name,
+                self.address.name,
                 self.rectangle.center_x,
                 self.rectangle.center_y,
                 arcade.color.WHITE,
@@ -117,8 +117,7 @@ class CentralPark(BaseLocation):
 
     def __init__(self):
         super().__init__(
-            address=Address(5, 60, 3, 50),
-            name="Central Park",
+            address=Address(5, 60, "Central Park", 3, 50),
             text_color=arcade.color.FOREST_GREEN,
         )
 
@@ -126,15 +125,12 @@ class CentralPark(BaseLocation):
 class PizzaShop(BaseLocation):
     """Class representing a Pizza shop in Manhattan. Coloured in red.
     Args:
-        name (str): Name of the pizza shop
-        avenue_number (int): Starting avenue number
-        street_number (int): Starting street number
+        address (Address): Address of the pizza shop
     """
 
-    def __init__(self, address: Address, name: str):
+    def __init__(self, address: Address):
         super().__init__(
             address=address,
-            name=name,
             text_color=arcade.color.RED,
         )
 
@@ -142,19 +138,15 @@ class PizzaShop(BaseLocation):
 class Home(BaseLocation):
     """Home location in Manhattan. Coloured in green.
     Args:
-        name (str): Name of the home
-        avenue_number (int): Starting avenue number
-        street_number (int): Starting street number
+        address (Address): Address of the home
     """
 
     def __init__(
         self,
         address: Address,
-        name: str | None = None,
     ):
         super().__init__(
             address=address,
-            name=name or "",
             text_color=arcade.color.GREEN,
         )
 
