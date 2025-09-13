@@ -38,7 +38,15 @@ Your mission? Deliver as many pizzas as possible in **5 minutes**.
 
 ## 🛠 Tech Stack
 
-Pygame
+Pygame/Arcade
 SQLite
 
 
+## Struggles
+1. Finding package and learning about Arcade
+2. Map creation
+
+
+#####
+More Ideas
+Bar --> Slows down speed
