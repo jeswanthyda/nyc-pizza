@@ -2,154 +2,16 @@
 
 import arcade
 
-# Manhattan map constants
-MAP_WIDTH = 800
-MAP_HEIGHT = 600
-MAP_OFFSET_X = 100
-MAP_OFFSET_Y = 100
-STREET_NUMBER_OFFSET = 50
-
-# Street layout - Manhattan has a grid system with avenues (north-south) and streets (east-west)
-AVENUES = 11  # Number of avenue blocks (vertical streets)
-STREETS = 25  # Number of streets (horizontal streets)
-AVENUE_WIDTH = MAP_WIDTH // (AVENUES + 1)
-STREET_HEIGHT = MAP_HEIGHT // (STREETS + 1)
-
-
-class Address:
-    """Address of a location."""
-
-    def __init__(
-        self,
-        avenue_number: int,
-        street_number: int,
-        name: str | None = None,
-        avenues_spread: int = 1,
-        streets_spread: int = 5,
-    ):
-        self.avenue_number = avenue_number
-        self.street_number = street_number
-        self.name = name
-        self.avenues_spread = avenues_spread
-        self.streets_spread = streets_spread
-
-    @property
-    def avenue_street_address(self) -> str:
-        """Get the address of the location."""
-        return f"{self.avenue_number}Av, {self.street_number}St"
-
-    def to_arcade_rect(self) -> arcade.Rect:
-        """
-        Convert avenue/street numbers to arcade.Rect.
-
-        Returns:
-            arcade.Rect: Rectangle object to be rendered by arcade.
-        """
-        right = MAP_OFFSET_X + (AVENUES + 1 - self.avenue_number) * AVENUE_WIDTH
-        left = right - (self.avenues_spread) * AVENUE_WIDTH
-        bottom = MAP_OFFSET_Y + (self.street_number // 5 - 1) * STREET_HEIGHT
-        top = bottom + (self.streets_spread // 5) * STREET_HEIGHT
-
-        return arcade.LRBT(left, right, bottom, top)
-
-
-class BaseLocation(arcade.Sprite):
-    """Base class for all locations in the game."""
-
-    def __init__(self, address: Address, text_color: arcade.color.Color):
-        """
-        Initialize a location.
-
-        Args:
-            address: Address of the location
-            text_color: Arcade color for the location
-        """
-        # Initialize arcade.Sprite first
-        super().__init__()
-
-        self.address = address
-        self.text_color = text_color
-
-        self.rectangle = self.address.to_arcade_rect()
-
-        # Set sprite properties for collision detection
-        self.center_x = self.rectangle.center_x
-        self.center_y = self.rectangle.center_y
-        self.width = self.rectangle.width
-        self.height = self.rectangle.height
-
-    @property
-    def avenue_street_address(self) -> str:
-        """Get the avenue/street address of the location."""
-        return self.address.avenue_street_address
-
-    def draw(self):
-        """Draw the location as a rectangle."""
-        arcade.draw_rect_filled(self.rectangle, self.text_color)
-        # If height is greater than width, draw the text vertically
-        if self.rectangle.height > self.rectangle.width:
-            arcade.draw_text(
-                self.address.name or self.address.avenue_street_address,
-                self.rectangle.center_x,
-                self.rectangle.center_y,
-                arcade.color.WHITE,
-                12,
-                align="center",
-                anchor_y="center",
-                anchor_x="center",
-                rotation=270,
-            )
-        else:
-            arcade.draw_text(
-                self.address.name or self.address.avenue_street_address,
-                self.rectangle.center_x,
-                self.rectangle.center_y,
-                arcade.color.WHITE,
-                12,
-                align="center",
-                anchor_y="center",
-                anchor_x="center",
-                rotation=0,
-            )
-
-
-class CentralPark(BaseLocation):
-    """Central Park location in Manhattan."""
-
-    def __init__(self):
-        super().__init__(
-            address=Address(5, 60, "Central Park", 3, 50),
-            text_color=arcade.color.FOREST_GREEN,
-        )
-
-
-class PizzaShop(BaseLocation):
-    """Class representing a Pizza shop in Manhattan. Coloured in red.
-    Args:
-        address (Address): Address of the pizza shop
-    """
-
-    def __init__(self, address: Address):
-        super().__init__(
-            address=address,
-            text_color=arcade.color.RED,
-        )
-
-
-class Home(BaseLocation):
-    """Home location in Manhattan. Coloured in green.
-    Args:
-        address (Address): Address of the home
-    """
-
-    def __init__(
-        self,
-        address: Address,
-    ):
-        super().__init__(
-            address=address,
-            text_color=arcade.color.GREEN,
-        )
+from constants import (
+    AVENUE_WIDTH,
+    AVENUES,
+    MAP_HEIGHT,
+    MAP_OFFSET_X,
+    MAP_OFFSET_Y,
+    MAP_WIDTH,
+    STREET_HEIGHT,
+    STREETS,
+)
 
 
 def draw_manhattan_map():
@@ -215,7 +77,7 @@ def draw_manhattan_map():
 
         # Left side labels
         arcade.draw_text(
-            f"{street_num}th St", STREET_NUMBER_OFFSET, y - 5, arcade.color.BLACK, 10
+            f"{street_num}th St", MAP_OFFSET_X, y - 5, arcade.color.BLACK, 10
         )
 
         # Right side labels

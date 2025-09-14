@@ -4,31 +4,25 @@ from typing import Iterable
 
 import arcade
 
-from map_layout import (
+from constants import (
+    COLLISION_THRESHOLD,
     MAP_HEIGHT,
     MAP_OFFSET_X,
     MAP_OFFSET_Y,
     MAP_WIDTH,
-    Address,
-    BaseLocation,
-    CentralPark,
-    Home,
-    PizzaShop,
+    PLAYER_SIZE,
+    PLAYER_SPEED,
+    SCREEN_HEIGHT,
+    SCREEN_TITLE,
+    SCREEN_WIDTH,
+)
+from map_layout import (
     draw_manhattan_map,
 )
-
-# Constants
-SCREEN_WIDTH = 1000
-SCREEN_HEIGHT = 800
-SCREEN_TITLE = "NYC Pizza Delivery - Manhattan"
-
-
-# Player constants
-PLAYER_SIZE = 50
-
-# Location constants
-PIZZA_SHOP_SIZE = 30
-HOME_SIZE = 30
+from ui_assets.base_models import Location
+from ui_assets.homes import HOMES
+from ui_assets.pizza_shops import PIZZA_SHOPS
+from ui_assets.special_locations import SPECIAL_LOCATIONS
 
 
 class PlayerCharacter(arcade.Sprite):
@@ -42,7 +36,7 @@ class PlayerCharacter(arcade.Sprite):
         self.has_pizza = False
 
         # Movement properties
-        self.speed = 300  # pixels per second
+        self.speed = PLAYER_SPEED
         self.change_x = 0
         self.change_y = 0
 
@@ -121,31 +115,24 @@ class PizzaDeliveryGame(arcade.Window):
         return self._player
 
     @property
-    def pizza_shops(self) -> Iterable[BaseLocation]:
+    def pizza_shops(self) -> Iterable[Location]:
         """Setup the pizza shops."""
         if self._pizza_shops is None:
-            pizza_shop_list = []
-            pizza_shop_list.append(PizzaShop(Address(3, 6, "Joe's")))
-            pizza_shop_list.append(PizzaShop(Address(7, 12, "Papa J's")))
-            return pizza_shop_list
+            self._pizza_shops = PIZZA_SHOPS
         return self._pizza_shops
 
     @property
-    def homes(self) -> Iterable[BaseLocation]:
+    def homes(self) -> Iterable[Location]:
         """Setup the homes."""
         if self._homes is None:
-            homes_list = []
-            homes_list.append(Home(Address(8, 8)))
-            return homes_list
+            self._homes = HOMES
         return self._homes
 
     @property
-    def special_locations(self) -> Iterable[BaseLocation]:
+    def special_locations(self) -> Iterable[Location]:
         """Setup the special locations."""
         if self._special_locations is None:
-            special_locations_list = []
-            special_locations_list.append(CentralPark())
-            return special_locations_list
+            self._special_locations = SPECIAL_LOCATIONS
         return self._special_locations
 
     def on_draw(self):
@@ -229,7 +216,7 @@ class PizzaDeliveryGame(arcade.Window):
             # Check distance to any pizza shop
             for pizza_shop in self.pizza_shops:
                 distance = arcade.get_distance_between_sprites(self.player, pizza_shop)
-                if distance < 40:  # Collision threshold
+                if distance < COLLISION_THRESHOLD:
                     self.player.has_pizza = True
                     print(f"Pizza picked up from {pizza_shop.address.name}!")
                     break
@@ -239,7 +226,7 @@ class PizzaDeliveryGame(arcade.Window):
             # Check distance to any home
             for home in self.homes:
                 distance = arcade.get_distance_between_sprites(self.player, home)
-                if distance < 40:  # Collision threshold
+                if distance < COLLISION_THRESHOLD:
                     self.player.has_pizza = False
                     self.score += 1
                     print(
