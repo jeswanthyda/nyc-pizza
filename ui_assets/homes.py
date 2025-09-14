@@ -19,6 +19,11 @@ class Home(Location):
             address=address,
             text_color=arcade.color.GREEN,
         )
+        self.home_texture = arcade.load_texture("home.png")
+
+    def draw(self):
+        """Draw the home using the home texture."""
+        arcade.draw_texture_rect(self.home_texture, self.arcade_rect, pixelated=True)
 
 
 # Add homes to the list here

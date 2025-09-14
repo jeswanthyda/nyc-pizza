@@ -78,6 +78,10 @@ class Location(arcade.Sprite):
         """Get the avenue/street address of the location."""
         return self.address.avenue_street_address
 
+    @property
+    def arcade_rect(self) -> arcade.Rect:
+        return self.rectangle
+
     def draw(self):
         """Draw the location as a rectangle."""
         arcade.draw_rect_filled(self.rectangle, self.text_color)
