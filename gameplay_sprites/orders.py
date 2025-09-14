@@ -66,17 +66,15 @@ class Order(arcade.Sprite):
 
         current_y -= 20
 
-        pickup_text = f"Pickup from {self.pickup_location.address.name}"
+        pickup_text = f"Pickup from {self.pickup_location.name}"
         arcade.draw_text(pickup_text, x, current_y, pickup_color, 12)
         current_y -= 15
 
-        pickup_address = f"at {self.pickup_location.address.avenue_street_address}"
+        pickup_address = f"at {self.pickup_location.avenue_street_address}"
         arcade.draw_text(pickup_address, x, current_y, pickup_color, 12)
         current_y -= 20
 
-        delivery_text = (
-            f"Deliver to {self.delivery_location.address.avenue_street_address}"
-        )
+        delivery_text = f"Deliver to {self.delivery_location.avenue_street_address}"
         arcade.draw_text(
             delivery_text,
             x,

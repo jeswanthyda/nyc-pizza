@@ -12,10 +12,7 @@ class Subway(Location):
     """
 
     def __init__(self, address: Address):
-        super().__init__(
-            address=address,
-            text_color=arcade.color.BLUE,
-        )
+        super().__init__(address=address)
         # Load the subway image texture
         self.subway_texture = arcade.load_texture("images/subway.png")
 

@@ -189,7 +189,7 @@ class PizzaDeliveryGame(arcade.Window):
         """Generate a new order and make it the current order."""
         self.current_order = Order.generate_order()
         print(
-            f"New order: Pickup from {self.current_order.pickup_location.address.name} at {self.current_order.pickup_location.address.avenue_street_address}, deliver to {self.current_order.delivery_location.address.avenue_street_address}"
+            f"New order: Pickup from {self.current_order.pickup_location.name} at {self.current_order.pickup_location.avenue_street_address}, deliver to {self.current_order.delivery_location.avenue_street_address}"
         )
 
     def get_current_pickup_location(self) -> Location:
@@ -217,13 +217,13 @@ class PizzaDeliveryGame(arcade.Window):
                 # Player doesn't have pizza - highlight pickup location only
                 pickup_location = self.get_current_pickup_location()
                 arcade.draw_rect_outline(
-                    pickup_location.rectangle, highlight_color, border_width=4
+                    pickup_location.arcade_rect, highlight_color, border_width=4
                 )
             else:
                 # Player has pizza - highlight delivery location only
                 delivery_location = self.get_current_delivery_location()
                 arcade.draw_rect_outline(
-                    delivery_location.rectangle, highlight_color, border_width=4
+                    delivery_location.arcade_rect, highlight_color, border_width=4
                 )
 
     def draw_sidebar(self):
@@ -429,7 +429,7 @@ class PizzaDeliveryGame(arcade.Window):
             distance = arcade.get_distance_between_sprites(self.player, pickup_location)
             if distance < COLLISION_THRESHOLD:
                 self.player.has_pizza = True
-                print(f"Pizza picked up from {pickup_location.address.name}!")
+                print(f"Pizza picked up from {pickup_location.name}!")
                 return
 
         # Check for pizza delivery using distance-based collision detection
@@ -444,7 +444,7 @@ class PizzaDeliveryGame(arcade.Window):
                 self.earned += 10  # +$10 per pizza delivery
                 self.score = self.earned - self.spent  # Update net income
                 print(
-                    f"Pizza delivered to {delivery_location.address.avenue_street_address}! Earned: ${self.earned}, Net: ${self.score} "
+                    f"Pizza delivered to {delivery_location.avenue_street_address}! Earned: ${self.earned}, Net: ${self.score} "
                 )
                 # Complete the current order and immediately generate a new one
                 self.current_order = None
@@ -497,7 +497,7 @@ class PizzaDeliveryGame(arcade.Window):
         self.subway_usage_count += 1
 
         print(
-            f"Teleported to subway at {closest_subway.address.avenue_street_address} (closest to destination)! Spent: ${self.spent}, Net: ${self.score} "
+            f"Teleported to subway at {closest_subway.avenue_street_address} (closest to destination)! Spent: ${self.spent}, Net: ${self.score} "
         )
 
     def on_key_press(self, key, modifiers):

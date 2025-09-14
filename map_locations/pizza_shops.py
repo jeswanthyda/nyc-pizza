@@ -12,10 +12,7 @@ class PizzaShop(Location):
     """
 
     def __init__(self, address: Address, logo_texture: arcade.Texture):
-        super().__init__(
-            address=address,
-            text_color=arcade.color.RED,
-        )
+        super().__init__(address=address)
         self.logo_texture = logo_texture
 
     def draw(self):

@@ -11,14 +11,8 @@ class Home(Location):
         address (Address): Address of the home
     """
 
-    def __init__(
-        self,
-        address: Address,
-    ):
-        super().__init__(
-            address=address,
-            text_color=arcade.color.GREEN,
-        )
+    def __init__(self, address: Address):
+        super().__init__(address=address)
         self.home_texture = arcade.load_texture("images/home.png")
 
     def draw(self):
