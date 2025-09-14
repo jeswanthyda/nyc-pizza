@@ -5,7 +5,7 @@ import arcade
 from constants import SCREEN_HEIGHT, SCREEN_WIDTH
 
 
-def draw_name_input_dialog(name_input_text: str, is_restart: bool = False):
+def draw_name_input_dialog(name_input_text: str):
     """Draw the name input dialog box overlay."""
     # Dialog box dimensions and positioning
     dialog_width = 400
@@ -31,7 +31,7 @@ def draw_name_input_dialog(name_input_text: str, is_restart: bool = False):
     )
 
     # Draw title
-    title_text = "NYC Pizza Delivery Game" if not is_restart else "Game Restart"
+    title_text = "NYC Pizza Delivery Game"
     arcade.draw_text(
         title_text,
         dialog_x + dialog_width // 2,
@@ -43,9 +43,7 @@ def draw_name_input_dialog(name_input_text: str, is_restart: bool = False):
     )
 
     # Draw instruction
-    instruction_text = (
-        "Enter your name:" if not is_restart else "Enter your name (or keep the same):"
-    )
+    instruction_text = "Enter your name:"
     arcade.draw_text(
         instruction_text,
         dialog_x + dialog_width // 2,
