@@ -19,6 +19,7 @@ from constants import (
 from map_layout import (
     draw_manhattan_map,
 )
+from orders import Order
 from ui_assets.base_models import Location
 from ui_assets.homes import HOMES
 from ui_assets.pizza_shops import PIZZA_SHOPS
@@ -107,6 +108,13 @@ class PizzaDeliveryGame(arcade.Window):
         self._homes = None
         self._special_locations = None
 
+        # Order management
+        self.current_order = None
+        self.flash_timer = 0.0
+
+        # Generate the first order immediately
+        self.generate_new_order()
+
     @property
     def player(self) -> arcade.Sprite:
         """Setup the player."""
@@ -135,6 +143,41 @@ class PizzaDeliveryGame(arcade.Window):
             self._special_locations = SPECIAL_LOCATIONS
         return self._special_locations
 
+    def generate_new_order(self):
+        """Generate a new order and make it the current order."""
+        self.current_order = Order.generate_order()
+        print(
+            f"New order: Pickup from {self.current_order.pickup_location.address.name} at {self.current_order.pickup_location.address.avenue_street_address}, deliver to {self.current_order.delivery_location.address.avenue_street_address}"
+        )
+
+    def get_current_pickup_location(self) -> Location:
+        """Get the current pickup location for highlighting."""
+        return self.current_order.pickup_location
+
+    def get_current_delivery_location(self) -> Location:
+        """Get the current delivery location for highlighting."""
+        return self.current_order.delivery_location
+
+    def draw_order_highlights(self):
+        """Draw highlighting for current order pickup and delivery locations."""
+        # Check if we should show highlights (flash effect)
+        should_highlight = (self.flash_timer % 1.0) < 0.5
+
+        if should_highlight:
+            # Highlight pickup location
+            pickup_location = self.get_current_pickup_location()
+            # Draw a bright yellow border around the pickup location
+            arcade.draw_rect_outline(
+                pickup_location.rectangle, arcade.color.YELLOW, border_width=4
+            )
+
+            # Highlight delivery location
+            delivery_location = self.get_current_delivery_location()
+            # Draw a bright cyan border around the delivery location
+            arcade.draw_rect_outline(
+                delivery_location.rectangle, arcade.color.CYAN, border_width=4
+            )
+
     def on_draw(self):
         """Render the screen."""
         self.clear()
@@ -142,13 +185,16 @@ class PizzaDeliveryGame(arcade.Window):
         # Draw Manhattan map first
         draw_manhattan_map()
 
-        # Draw all sprites
+        # Draw all sprites with highlighting
         for location in self.pizza_shops:
             location.draw()
         for location in self.homes:
             location.draw()
         for location in self.special_locations:
             location.draw()
+
+        # Draw highlighting for current order locations
+        self.draw_order_highlights()
 
         # Draw player character
         player_list = arcade.SpriteList()
@@ -169,10 +215,30 @@ class PizzaDeliveryGame(arcade.Window):
             20,
         )
 
+        # Draw current order information
+        # Flash the order text continuously while order is active
+        should_show_order = (self.flash_timer % 1.0) < 0.5
+
+        if should_show_order:
+            order_text = f"ACTIVE ORDER: Pickup from {self.current_order.pickup_location.address.name} at {self.current_order.pickup_location.address.avenue_street_address}"
+            arcade.draw_text(
+                order_text, 10, SCREEN_HEIGHT - 60, arcade.color.RED, 16, bold=True
+            )
+            delivery_text = f"Deliver to {self.current_order.delivery_location.address.avenue_street_address}"
+            arcade.draw_text(
+                delivery_text,
+                10,
+                SCREEN_HEIGHT - 80,
+                arcade.color.BLUE,
+                16,
+                bold=True,
+            )
+
         # Draw instructions
         if not self.player.has_pizza:
+            pickup_location = self.get_current_pickup_location()
             arcade.draw_text(
-                "Go to Joe's Pizza or Papa's Pizza (RED) and press SPACE to pick up pizza!",
+                f"CURRENT ORDER: Go to {pickup_location.address.name} (YELLOW HIGHLIGHT) and press SPACE to pick up pizza!",
                 10,
                 30,
                 arcade.color.BLACK,
@@ -180,7 +246,7 @@ class PizzaDeliveryGame(arcade.Window):
             )
         else:
             arcade.draw_text(
-                "Go to GREEN home and press SPACE to deliver pizza!",
+                "CURRENT ORDER: Go to the CYAN highlighted home and press SPACE to deliver pizza!",
                 10,
                 30,
                 arcade.color.BLACK,
@@ -209,30 +275,38 @@ class PizzaDeliveryGame(arcade.Window):
         """Movement and game logic."""
         self.player.update(delta_time)
 
+        # Update flash timer for highlighting effects
+        self.flash_timer += delta_time
+
     def handle_space_action(self):
         """Handle space bar action for pizza pickup and dropoff."""
         # Check for pizza pickup using distance-based collision detection
         if not self.player.has_pizza:
-            # Check distance to any pizza shop
-            for pizza_shop in self.pizza_shops:
-                distance = arcade.get_distance_between_sprites(self.player, pizza_shop)
-                if distance < COLLISION_THRESHOLD:
-                    self.player.has_pizza = True
-                    print(f"Pizza picked up from {pizza_shop.address.name}!")
-                    break
+            # Only allow pickup from the current order's pickup location
+            pickup_location = self.get_current_pickup_location()
+            distance = arcade.get_distance_between_sprites(self.player, pickup_location)
+            if distance < COLLISION_THRESHOLD:
+                self.player.has_pizza = True
+                print(f"Pizza picked up from {pickup_location.address.name}!")
+                return
 
         # Check for pizza delivery using distance-based collision detection
         elif self.player.has_pizza:
-            # Check distance to any home
-            for home in self.homes:
-                distance = arcade.get_distance_between_sprites(self.player, home)
-                if distance < COLLISION_THRESHOLD:
-                    self.player.has_pizza = False
-                    self.score += 1
-                    print(
-                        f"Pizza delivered to {home.address.name}! Score: {self.score}"
-                    )
-                    break
+            # Only allow delivery to the current order's delivery location
+            delivery_location = self.get_current_delivery_location()
+            distance = arcade.get_distance_between_sprites(
+                self.player, delivery_location
+            )
+            if distance < COLLISION_THRESHOLD:
+                self.player.has_pizza = False
+                self.score += 1
+                print(
+                    f"Pizza delivered to {delivery_location.address.avenue_street_address}! Score: {self.score}"
+                )
+                # Complete the current order and immediately generate a new one
+                self.current_order = None
+                self.generate_new_order()
+                return
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""

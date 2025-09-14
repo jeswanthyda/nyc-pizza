@@ -24,12 +24,12 @@ class Home(Location):
 # Add homes to the list here
 HOMES = [
     Home(Address(8, 8)),
-    Home(Address(2, 15)),
-    Home(Address(9, 20)),
-    Home(Address(1, 10)),
-    Home(Address(6, 25)),
-    Home(Address(4, 5)),
+    Home(Address(1, 15)),
+    Home(Address(2, 120)),
+    Home(Address(5, 23)),
+    Home(Address(7, 32)),
+    Home(Address(10, 45)),
     Home(Address(10, 18)),
-    Home(Address(5, 12)),
-    Home(Address(3, 22)),
+    Home(Address(4, 55)),
+    Home(Address(11, 65)),
 ]

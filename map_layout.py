@@ -77,7 +77,7 @@ def draw_manhattan_map():
 
         # Left side labels
         arcade.draw_text(
-            f"{street_num}th St", MAP_OFFSET_X, y - 5, arcade.color.BLACK, 10
+            f"{street_num}th St", MAP_OFFSET_X - 50, y - 5, arcade.color.BLACK, 10
         )
 
         # Right side labels

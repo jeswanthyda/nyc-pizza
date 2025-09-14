@@ -20,8 +20,8 @@ class PizzaShop(Location):
 
 # Add pizza shops to the list here
 PIZZA_SHOPS = [
-    PizzaShop(Address(3, 6, "Joe's")),
-    PizzaShop(Address(7, 12, "Papa J's")),
-    PizzaShop(Address(10, 15, "Tom's")),
-    PizzaShop(Address(6, 20, "Dominos")),
+    PizzaShop(Address(8, 42, "Joe's")),
+    PizzaShop(Address(6, 33, "Papa J's")),
+    PizzaShop(Address(2, 86, "Tom's")),
+    PizzaShop(Address(11, 120, "Dominos")),
 ]
