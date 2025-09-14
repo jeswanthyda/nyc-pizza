@@ -214,19 +214,21 @@ class PizzaDeliveryGame(arcade.Window):
         should_highlight = (self.flash_timer % 1.0) < 0.5
 
         if should_highlight:
-            # Highlight pickup location
-            pickup_location = self.get_current_pickup_location()
-            # Draw a bright yellow border around the pickup location
-            arcade.draw_rect_outline(
-                pickup_location.rectangle, arcade.color.YELLOW, border_width=4
-            )
+            # Use single color for highlighting
+            highlight_color = arcade.color.MAGENTA
 
-            # Highlight delivery location
-            delivery_location = self.get_current_delivery_location()
-            # Draw a bright cyan border around the delivery location
-            arcade.draw_rect_outline(
-                delivery_location.rectangle, arcade.color.CYAN, border_width=4
-            )
+            if not self.player.has_pizza:
+                # Player doesn't have pizza - highlight pickup location only
+                pickup_location = self.get_current_pickup_location()
+                arcade.draw_rect_outline(
+                    pickup_location.rectangle, highlight_color, border_width=4
+                )
+            else:
+                # Player has pizza - highlight delivery location only
+                delivery_location = self.get_current_delivery_location()
+                arcade.draw_rect_outline(
+                    delivery_location.rectangle, highlight_color, border_width=4
+                )
 
     def draw_sidebar(self):
         """Draw the sidebar with game information."""
