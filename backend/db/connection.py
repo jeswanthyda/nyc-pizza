@@ -1,6 +1,5 @@
 import os
 import sqlite3
-from contextlib import contextmanager
 from typing import Generator
 
 # SQLite database path - use absolute path to avoid issues when running from different directories
@@ -14,16 +13,10 @@ def get_db_connection() -> sqlite3.Connection:
     return conn
 
 
-@contextmanager
-def get_db() -> Generator[sqlite3.Connection, None, None]:
-    """Context manager for database connections"""
+def get_db_dependency() -> Generator[sqlite3.Connection, None, None]:
+    """FastAPI dependency that provides a database connection with automatic cleanup"""
     conn = get_db_connection()
     try:
         yield conn
     finally:
         conn.close()
-
-
-def get_db_dependency() -> sqlite3.Connection:
-    """FastAPI dependency that returns a database connection"""
-    return get_db_connection()

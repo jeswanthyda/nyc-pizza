@@ -3,9 +3,8 @@
 -- Description: Creates the sessions table for storing game session data
 
 CREATE TABLE IF NOT EXISTS sessions (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id VARCHAR PRIMARY KEY,
     player_name VARCHAR NOT NULL,
-    session_id VARCHAR UNIQUE NOT NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP NOT NULL,
     earned REAL DEFAULT 0.0 NOT NULL,
     spent REAL DEFAULT 0.0 NOT NULL,
