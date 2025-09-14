@@ -22,7 +22,9 @@ from map_layout import (
 )
 from orders import Order
 from ui_assets.base_models import Location
+from ui_assets.final_score_dialog import draw_final_score
 from ui_assets.homes import HOMES
+from ui_assets.name_input_dialog import draw_name_input_dialog
 from ui_assets.pizza_shops import PIZZA_SHOPS
 from ui_assets.special_locations import SPECIAL_LOCATIONS
 
@@ -103,6 +105,9 @@ class PizzaDeliveryGame(arcade.Window):
 
         # Game objects
         self.score = 0
+        self.player_name = ""
+        self._is_game_active = False
+        self.name_input_text = ""
 
         self._player = None
         self._pizza_shops = None
@@ -113,8 +118,69 @@ class PizzaDeliveryGame(arcade.Window):
         self.current_order = None
         self.flash_timer = 0.0
 
-        # Generate the first order immediately
+        # Game timer (1 minute = 60 seconds)
+        self.game_timer = 0.0
+        self.game_duration = 60.0  # 1 minute in seconds
+        self._is_game_over = False
+        self._is_restart = False
+
+    def complete_name_input(self):
+        """Complete the name input and start the game."""
+        self.player_name = (
+            self.name_input_text.strip() if self.name_input_text.strip() else "Player"
+        )
+        self._is_game_active = True
+        self._is_game_over = False
+        self._is_restart = False
+        self.game_timer = 0.0  # Reset timer
+
+        # Start the game by generating a new order
         self.generate_new_order()
+        print(f"Welcome, {self.player_name}! Let's start delivering pizzas!")
+
+    def end_game(self):
+        """End the game and show final score."""
+        self._is_game_over = True
+        self.log_final_score()
+
+    def restart_game(self):
+        """Restart the game and ask for player name again."""
+        # Reset game state
+        self._is_game_over = False
+        self._is_game_active = False
+        self._is_restart = True
+        self.score = 0
+        self.game_timer = 0.0
+        self.current_order = None
+        self.flash_timer = 0.0
+
+        # Reset player position and state
+        self.player.center_x = MAP_OFFSET_X + MAP_WIDTH // 2
+        self.player.center_y = MAP_OFFSET_Y + MAP_HEIGHT // 2
+        self.player.has_pizza = False
+        self.player.stop_movement()
+
+        # Clear name input to show the name input dialog again
+        self.name_input_text = ""
+
+        print("Game restarted! Please enter your name to start a new game.")
+
+    def log_final_score(self):
+        """Log the final score with player name."""
+        print("\n=== GAME OVER ===")
+        print(f"Player: {self.player_name}")
+        print(f"Final Score: {self.score}")
+        print("================\n")
+
+    @property
+    def is_game_active(self) -> bool:
+        """Check if the game is active."""
+        return self._is_game_active and not self._is_game_over
+
+    @property
+    def is_game_over(self) -> bool:
+        """Check if the game is over."""
+        return self._is_game_over
 
     @property
     def player(self) -> arcade.Sprite:
@@ -161,6 +227,10 @@ class PizzaDeliveryGame(arcade.Window):
 
     def draw_order_highlights(self):
         """Draw highlighting for current order pickup and delivery locations."""
+        # Don't draw highlights if there's no current order
+        if self.current_order is None:
+            return
+
         # Check if we should show highlights (flash effect)
         should_highlight = (self.flash_timer % 1.0) < 0.5
 
@@ -199,46 +269,78 @@ class PizzaDeliveryGame(arcade.Window):
         sidebar_text_x = SIDEBAR_X + 10
         current_y = SCREEN_HEIGHT - 30
 
+        # Draw player name
+        arcade.draw_text(
+            f"Player: {self.player_name}",
+            sidebar_text_x,
+            current_y,
+            arcade.color.BLACK,
+            14,
+            bold=True,
+        )
+        current_y -= 25
+
         # Draw score
         arcade.draw_text(
             f"Score: {self.score}", sidebar_text_x, current_y, arcade.color.BLACK, 16
         )
         current_y -= 30
 
+        # Draw timer
+        remaining_time = max(0, self.game_duration - self.game_timer)
+        timer_color = arcade.color.RED if remaining_time < 10 else arcade.color.BLACK
+        arcade.draw_text(
+            f"Time: {remaining_time:.1f}s", sidebar_text_x, current_y, timer_color, 16
+        )
+        current_y -= 30
+
         # Draw current order information
-        # Always show order, but alternate colors based on flash_timer
-        order_text = "ACTIVE ORDER:"
-        arcade.draw_text(
-            order_text, sidebar_text_x, current_y, arcade.color.BLACK, 14, bold=True
-        )
+        if self.current_order is not None:
+            # Always show order, but alternate colors based on flash_timer
+            order_text = "ACTIVE ORDER:"
+            arcade.draw_text(
+                order_text, sidebar_text_x, current_y, arcade.color.BLACK, 14, bold=True
+            )
 
-        should_use_alt_color = (self.flash_timer % 1.0) < 0.5
-        pickup_color = arcade.color.RED if should_use_alt_color else arcade.color.ORANGE
-        delivery_color = (
-            arcade.color.BLUE if should_use_alt_color else arcade.color.CYAN
-        )
+            should_use_alt_color = (self.flash_timer % 1.0) < 0.5
+            pickup_color = (
+                arcade.color.RED if should_use_alt_color else arcade.color.ORANGE
+            )
+            delivery_color = (
+                arcade.color.BLUE if should_use_alt_color else arcade.color.CYAN
+            )
 
-        current_y -= 20
+            current_y -= 20
 
-        pickup_text = f"Pickup from {self.current_order.pickup_location.address.name}"
-        arcade.draw_text(pickup_text, sidebar_text_x, current_y, pickup_color, 12)
-        current_y -= 15
+            pickup_text = (
+                f"Pickup from {self.current_order.pickup_location.address.name}"
+            )
+            arcade.draw_text(pickup_text, sidebar_text_x, current_y, pickup_color, 12)
+            current_y -= 15
 
-        pickup_address = (
-            f"at {self.current_order.pickup_location.address.avenue_street_address}"
-        )
-        arcade.draw_text(pickup_address, sidebar_text_x, current_y, pickup_color, 12)
-        current_y -= 20
+            pickup_address = (
+                f"at {self.current_order.pickup_location.address.avenue_street_address}"
+            )
+            arcade.draw_text(
+                pickup_address, sidebar_text_x, current_y, pickup_color, 12
+            )
+            current_y -= 20
 
-        delivery_text = f"Deliver to {self.current_order.delivery_location.address.avenue_street_address}"
-        arcade.draw_text(
-            delivery_text,
-            sidebar_text_x,
-            current_y,
-            delivery_color,
-            12,
-            bold=True,
-        )
+            delivery_text = f"Deliver to {self.current_order.delivery_location.address.avenue_street_address}"
+            arcade.draw_text(
+                delivery_text,
+                sidebar_text_x,
+                current_y,
+                delivery_color,
+                12,
+                bold=True,
+            )
+        else:
+            # Show waiting message when no order is active
+            order_text = "WAITING FOR ORDER..."
+            arcade.draw_text(
+                order_text, sidebar_text_x, current_y, arcade.color.GRAY, 14, bold=True
+            )
 
         # Draw controls
         current_y = MAP_OFFSET_Y
@@ -268,6 +370,18 @@ class PizzaDeliveryGame(arcade.Window):
         """Render the screen."""
         self.clear()
 
+        # Always draw the game screen first
+        self.draw_game_screen()
+
+        # If game is not active, draw the name input dialog on top
+        if not self.is_game_active and not self.is_game_over:
+            draw_name_input_dialog(self.name_input_text, self._is_restart)
+        # If game is over, draw the final score screen
+        elif self.is_game_over:
+            draw_final_score(self.player_name, self.score)
+
+    def draw_game_screen(self):
+        """Draw the normal game screen."""
         # Draw Manhattan map first
         draw_manhattan_map()
 
@@ -310,10 +424,17 @@ class PizzaDeliveryGame(arcade.Window):
 
     def on_update(self, delta_time):
         """Movement and game logic."""
-        self.player.update(delta_time)
+        if self.is_game_active:
+            self.player.update(delta_time)
+            # Update flash timer for highlighting effects
+            self.flash_timer += delta_time
 
-        # Update flash timer for highlighting effects
-        self.flash_timer += delta_time
+            # Update game timer
+            self.game_timer += delta_time
+
+            # Check if time is up
+            if self.game_timer >= self.game_duration:
+                self.end_game()
 
     def handle_space_action(self):
         """Handle space bar action for pizza pickup and dropoff."""
@@ -347,33 +468,57 @@ class PizzaDeliveryGame(arcade.Window):
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
-        if key == arcade.key.UP or key == arcade.key.W:
-            self.player.move_direction("up")
-        elif key == arcade.key.DOWN or key == arcade.key.S:
-            self.player.move_direction("down")
-        elif key == arcade.key.LEFT or key == arcade.key.A:
-            self.player.move_direction("left")
-        elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.player.move_direction("right")
-        elif key == arcade.key.SPACE:
-            self.handle_space_action()
-        elif key == arcade.key.ESCAPE:
-            arcade.close_window()
+        if self.is_game_over:
+            # Handle game over screen
+            if key == arcade.key.ESCAPE:
+                arcade.close_window()
+            elif key == arcade.key.R:
+                self.restart_game()
+        elif not self.is_game_active:
+            # Handle name input
+            if key == arcade.key.ENTER:
+                self.complete_name_input()
+            elif key == arcade.key.BACKSPACE:
+                if self.name_input_text:
+                    self.name_input_text = self.name_input_text[:-1]
+            elif key == arcade.key.ESCAPE:
+                arcade.close_window()
+            else:
+                # Add character to input text (only letters, numbers, and spaces)
+                char = chr(key) if 32 <= key <= 126 else ""
+                if char and len(self.name_input_text) < 20:  # Limit name length
+                    self.name_input_text += char
+        else:
+            # Handle game controls
+            if key == arcade.key.UP or key == arcade.key.W:
+                self.player.move_direction("up")
+            elif key == arcade.key.DOWN or key == arcade.key.S:
+                self.player.move_direction("down")
+            elif key == arcade.key.LEFT or key == arcade.key.A:
+                self.player.move_direction("left")
+            elif key == arcade.key.RIGHT or key == arcade.key.D:
+                self.player.move_direction("right")
+            elif key == arcade.key.SPACE:
+                self.handle_space_action()
+            elif key == arcade.key.ESCAPE:
+                self.log_final_score()
+                arcade.close_window()
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key."""
-        # Stop movement when key is released
-        if (
-            key == arcade.key.UP
-            or key == arcade.key.W
-            or key == arcade.key.DOWN
-            or key == arcade.key.S
-            or key == arcade.key.LEFT
-            or key == arcade.key.A
-            or key == arcade.key.RIGHT
-            or key == arcade.key.D
-        ):
-            self.player.stop_movement()
+        # Stop movement when key is released (only during game, not name input)
+        if self.is_game_active:
+            if (
+                key == arcade.key.UP
+                or key == arcade.key.W
+                or key == arcade.key.DOWN
+                or key == arcade.key.S
+                or key == arcade.key.LEFT
+                or key == arcade.key.A
+                or key == arcade.key.RIGHT
+                or key == arcade.key.D
+            ):
+                self.player.stop_movement()
 
 
 def main():
