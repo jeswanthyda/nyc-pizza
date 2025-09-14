@@ -5,9 +5,13 @@ map layout, street layout, and game mechanics.
 """
 
 # Screen and Window Constants
-SCREEN_WIDTH = 1000
+SCREEN_WIDTH = 1200  # Increased to accommodate sidebar
 SCREEN_HEIGHT = 800
 SCREEN_TITLE = "NYC Pizza Delivery - Manhattan"
+
+# Sidebar Constants
+SIDEBAR_WIDTH = 200
+SIDEBAR_X = SCREEN_WIDTH - SIDEBAR_WIDTH
 
 # Player Constants
 PLAYER_SIZE = 50

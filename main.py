@@ -15,6 +15,7 @@ from constants import (
     SCREEN_HEIGHT,
     SCREEN_TITLE,
     SCREEN_WIDTH,
+    SIDEBAR_X,
 )
 from map_layout import (
     draw_manhattan_map,
@@ -178,6 +179,91 @@ class PizzaDeliveryGame(arcade.Window):
                 delivery_location.rectangle, arcade.color.CYAN, border_width=4
             )
 
+    def draw_sidebar(self):
+        """Draw the sidebar with game information."""
+        # Draw sidebar background
+        sidebar_rect = arcade.LRBT(SIDEBAR_X, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
+        arcade.draw_rect_filled(
+            sidebar_rect,
+            arcade.color.LIGHT_BLUE,
+        )
+
+        # Draw sidebar border
+        arcade.draw_rect_outline(
+            sidebar_rect,
+            arcade.color.BLACK,
+            border_width=2,
+        )
+
+        # Sidebar text positioning
+        sidebar_text_x = SIDEBAR_X + 10
+        current_y = SCREEN_HEIGHT - 30
+
+        # Draw score
+        arcade.draw_text(
+            f"Score: {self.score}", sidebar_text_x, current_y, arcade.color.BLACK, 16
+        )
+        current_y -= 30
+
+        # Draw current order information
+        # Always show order, but alternate colors based on flash_timer
+        order_text = "ACTIVE ORDER:"
+        arcade.draw_text(
+            order_text, sidebar_text_x, current_y, arcade.color.BLACK, 14, bold=True
+        )
+
+        should_use_alt_color = (self.flash_timer % 1.0) < 0.5
+        pickup_color = arcade.color.RED if should_use_alt_color else arcade.color.ORANGE
+        delivery_color = (
+            arcade.color.BLUE if should_use_alt_color else arcade.color.CYAN
+        )
+
+        current_y -= 20
+
+        pickup_text = f"Pickup from {self.current_order.pickup_location.address.name}"
+        arcade.draw_text(pickup_text, sidebar_text_x, current_y, pickup_color, 12)
+        current_y -= 15
+
+        pickup_address = (
+            f"at {self.current_order.pickup_location.address.avenue_street_address}"
+        )
+        arcade.draw_text(pickup_address, sidebar_text_x, current_y, pickup_color, 12)
+        current_y -= 20
+
+        delivery_text = f"Deliver to {self.current_order.delivery_location.address.avenue_street_address}"
+        arcade.draw_text(
+            delivery_text,
+            sidebar_text_x,
+            current_y,
+            delivery_color,
+            12,
+            bold=True,
+        )
+
+        # Draw controls
+        current_y = MAP_OFFSET_Y
+        arcade.draw_text(
+            "Controls:", sidebar_text_x, current_y, arcade.color.BLACK, 12, bold=True
+        )
+        current_y -= 20
+
+        arcade.draw_text(
+            "WASD/Arrow Keys to move",
+            sidebar_text_x,
+            current_y,
+            arcade.color.BLACK,
+            10,
+        )
+        current_y -= 15
+
+        arcade.draw_text(
+            "SPACE to pickup/deliver",
+            sidebar_text_x,
+            current_y,
+            arcade.color.BLACK,
+            10,
+        )
+
     def on_draw(self):
         """Render the screen."""
         self.clear()
@@ -201,10 +287,8 @@ class PizzaDeliveryGame(arcade.Window):
         player_list.append(self.player)
         player_list.draw()
 
-        # Draw UI
-        arcade.draw_text(
-            f"Score: {self.score}", 10, SCREEN_HEIGHT - 30, arcade.color.BLACK, 16
-        )
+        # Draw sidebar
+        self.draw_sidebar()
 
         # Draw map labels
         arcade.draw_text(
@@ -213,53 +297,6 @@ class PizzaDeliveryGame(arcade.Window):
             MAP_OFFSET_Y + MAP_HEIGHT + 20,
             arcade.color.BLACK,
             20,
-        )
-
-        # Draw current order information
-        # Flash the order text continuously while order is active
-        should_show_order = (self.flash_timer % 1.0) < 0.5
-
-        if should_show_order:
-            order_text = f"ACTIVE ORDER: Pickup from {self.current_order.pickup_location.address.name} at {self.current_order.pickup_location.address.avenue_street_address}"
-            arcade.draw_text(
-                order_text, 10, SCREEN_HEIGHT - 60, arcade.color.RED, 16, bold=True
-            )
-            delivery_text = f"Deliver to {self.current_order.delivery_location.address.avenue_street_address}"
-            arcade.draw_text(
-                delivery_text,
-                10,
-                SCREEN_HEIGHT - 80,
-                arcade.color.BLUE,
-                16,
-                bold=True,
-            )
-
-        # Draw instructions
-        if not self.player.has_pizza:
-            pickup_location = self.get_current_pickup_location()
-            arcade.draw_text(
-                f"CURRENT ORDER: Go to {pickup_location.address.name} (YELLOW HIGHLIGHT) and press SPACE to pick up pizza!",
-                10,
-                30,
-                arcade.color.BLACK,
-                14,
-            )
-        else:
-            arcade.draw_text(
-                "CURRENT ORDER: Go to the CYAN highlighted home and press SPACE to deliver pizza!",
-                10,
-                30,
-                arcade.color.BLACK,
-                14,
-            )
-
-        # Draw controls
-        arcade.draw_text(
-            "Controls: WASD/Arrow Keys to move, SPACE to pickup/deliver",
-            10,
-            10,
-            arcade.color.BLACK,
-            12,
         )
 
         # Draw pizza indicator
