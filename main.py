@@ -6,12 +6,11 @@ import arcade
 
 from constants import (
     COLLISION_THRESHOLD,
+    GAME_DURATION,
     MAP_HEIGHT,
     MAP_OFFSET_X,
     MAP_OFFSET_Y,
     MAP_WIDTH,
-    PLAYER_SIZE,
-    PLAYER_SPEED,
     SCREEN_HEIGHT,
     SCREEN_TITLE,
     SCREEN_WIDTH,
@@ -21,79 +20,14 @@ from map_layout import (
     draw_manhattan_map,
 )
 from orders import Order
+from player import PlayerCharacter
 from ui_assets.base_models import Location
 from ui_assets.final_score_dialog import draw_final_score
 from ui_assets.homes import HOMES
 from ui_assets.name_input_dialog import draw_name_input_dialog
 from ui_assets.pizza_shops import PIZZA_SHOPS
 from ui_assets.special_locations import SPECIAL_LOCATIONS
-
-
-class PlayerCharacter(arcade.Sprite):
-    """Player character - Pizza Delivery Person."""
-
-    def __init__(self):
-        super().__init__()
-        # Start at center of Manhattan map
-        self.center_x = MAP_OFFSET_X + MAP_WIDTH // 2
-        self.center_y = MAP_OFFSET_Y + MAP_HEIGHT // 2
-        self.has_pizza = False
-
-        # Movement properties
-        self.speed = PLAYER_SPEED
-        self.change_x = 0
-        self.change_y = 0
-
-        # Load the scooter image and scale it
-        self.texture = arcade.load_texture("scooter.png")
-        self.width = PLAYER_SIZE
-        self.height = PLAYER_SIZE
-
-    def move_direction(self, direction):
-        """Set movement velocity in the specified direction."""
-        if direction == "up":
-            self.change_y = self.speed
-            self.change_x = 0
-        elif direction == "down":
-            self.change_y = -self.speed
-            self.change_x = 0
-        elif direction == "left":
-            self.change_x = -self.speed
-            self.change_y = 0
-        elif direction == "right":
-            self.change_x = self.speed
-            self.change_y = 0
-
-    def stop_movement(self):
-        """Stop all movement."""
-        self.change_x = 0
-        self.change_y = 0
-
-    def update(self, delta_time=0):
-        """Update the delivery person's position with velocity."""
-        # Update position based on velocity
-        self.center_x += self.change_x * delta_time
-        self.center_y += self.change_y * delta_time
-
-        # Keep player within Manhattan map boundaries
-        min_x = MAP_OFFSET_X
-        max_x = MAP_OFFSET_X + MAP_WIDTH
-        min_y = MAP_OFFSET_Y
-        max_y = MAP_OFFSET_Y + MAP_HEIGHT
-
-        if self.center_x < min_x:
-            self.center_x = min_x
-            self.change_x = 0
-        elif self.center_x > max_x:
-            self.center_x = max_x
-            self.change_x = 0
-
-        if self.center_y < min_y:
-            self.center_y = min_y
-            self.change_y = 0
-        elif self.center_y > max_y:
-            self.center_y = max_y
-            self.change_y = 0
+from ui_assets.subways import SUBWAYS
 
 
 class PizzaDeliveryGame(arcade.Window):
@@ -113,6 +47,7 @@ class PizzaDeliveryGame(arcade.Window):
         self._pizza_shops = None
         self._homes = None
         self._special_locations = None
+        self._subways = None
 
         # Order management
         self.current_order = None
@@ -120,7 +55,7 @@ class PizzaDeliveryGame(arcade.Window):
 
         # Game timer (1 minute = 60 seconds)
         self.game_timer = 0.0
-        self.game_duration = 60.0  # 1 minute in seconds
+        self.game_duration = GAME_DURATION
         self._is_game_over = False
         self._is_restart = False
 
@@ -210,6 +145,13 @@ class PizzaDeliveryGame(arcade.Window):
             self._special_locations = SPECIAL_LOCATIONS
         return self._special_locations
 
+    @property
+    def subways(self) -> Iterable[Location]:
+        """Setup the subways."""
+        if self._subways is None:
+            self._subways = SUBWAYS
+        return self._subways
+
     def generate_new_order(self):
         """Generate a new order and make it the current order."""
         self.current_order = Order.generate_order()
@@ -296,50 +238,8 @@ class PizzaDeliveryGame(arcade.Window):
 
         # Draw current order information
         if self.current_order is not None:
-            # Always show order, but alternate colors based on flash_timer
-            order_text = "ACTIVE ORDER:"
-            arcade.draw_text(
-                order_text, sidebar_text_x, current_y, arcade.color.BLACK, 14, bold=True
-            )
-
-            should_use_alt_color = (self.flash_timer % 1.0) < 0.5
-            pickup_color = (
-                arcade.color.RED if should_use_alt_color else arcade.color.ORANGE
-            )
-            delivery_color = (
-                arcade.color.BLUE if should_use_alt_color else arcade.color.CYAN
-            )
-
-            current_y -= 20
-
-            pickup_text = (
-                f"Pickup from {self.current_order.pickup_location.address.name}"
-            )
-            arcade.draw_text(pickup_text, sidebar_text_x, current_y, pickup_color, 12)
-            current_y -= 15
-
-            pickup_address = (
-                f"at {self.current_order.pickup_location.address.avenue_street_address}"
-            )
-            arcade.draw_text(
-                pickup_address, sidebar_text_x, current_y, pickup_color, 12
-            )
-            current_y -= 20
-
-            delivery_text = f"Deliver to {self.current_order.delivery_location.address.avenue_street_address}"
-            arcade.draw_text(
-                delivery_text,
-                sidebar_text_x,
-                current_y,
-                delivery_color,
-                12,
-                bold=True,
-            )
-        else:
-            # Show waiting message when no order is active
-            order_text = "WAITING FOR ORDER..."
-            arcade.draw_text(
-                order_text, sidebar_text_x, current_y, arcade.color.GRAY, 14, bold=True
+            current_y = self.current_order.draw_order_info(
+                sidebar_text_x, current_y, self.flash_timer
             )
 
         # Draw controls
@@ -360,6 +260,15 @@ class PizzaDeliveryGame(arcade.Window):
 
         arcade.draw_text(
             "SPACE to pickup/deliver",
+            sidebar_text_x,
+            current_y,
+            arcade.color.BLACK,
+            10,
+        )
+        current_y -= 15
+
+        arcade.draw_text(
+            "SPACE at subway to teleport",
             sidebar_text_x,
             current_y,
             arcade.color.BLACK,
@@ -392,14 +301,14 @@ class PizzaDeliveryGame(arcade.Window):
             location.draw()
         for location in self.special_locations:
             location.draw()
+        for location in self.subways:
+            location.draw()
 
         # Draw highlighting for current order locations
         self.draw_order_highlights()
 
         # Draw player character
-        player_list = arcade.SpriteList()
-        player_list.append(self.player)
-        player_list.draw()
+        self.player.draw()
 
         # Draw sidebar
         self.draw_sidebar()
@@ -412,15 +321,6 @@ class PizzaDeliveryGame(arcade.Window):
             arcade.color.BLACK,
             20,
         )
-
-        # Draw pizza indicator
-        if self.player.has_pizza:
-            arcade.draw_circle_filled(
-                self.player.center_x,
-                self.player.center_y + 30,
-                8,
-                arcade.color.YELLOW,
-            )
 
     def on_update(self, delta_time):
         """Movement and game logic."""
@@ -437,7 +337,8 @@ class PizzaDeliveryGame(arcade.Window):
                 self.end_game()
 
     def handle_space_action(self):
-        """Handle space bar action for pizza pickup and dropoff."""
+        """Handle space bar action for pizza pickup, dropoff, and subway teleportation."""
+
         # Check for pizza pickup using distance-based collision detection
         if not self.player.has_pizza:
             # Only allow pickup from the current order's pickup location
@@ -465,6 +366,50 @@ class PizzaDeliveryGame(arcade.Window):
                 self.current_order = None
                 self.generate_new_order()
                 return
+
+        # Check for subway interaction first (available at any time)
+        for subway in self.subways:
+            distance = arcade.get_distance_between_sprites(self.player, subway)
+            if distance < COLLISION_THRESHOLD:
+                self.handle_subway_teleportation()
+                return
+
+    def find_closest_subway_to_destination(
+        self, destination: Location
+    ) -> Location | None:
+        """Find the subway station closest to the given destination."""
+
+        min_distance = float("inf")
+        closest_subway = None
+
+        for subway in self.subways:
+            distance = arcade.get_distance_between_sprites(subway, destination)
+            if distance < min_distance:
+                min_distance = distance
+                closest_subway = subway
+
+        return closest_subway
+
+    def handle_subway_teleportation(self):
+        """Handle subway teleportation to the closest subway near the destination."""
+        if self.current_order is None:
+            print(
+                "No active order - can't determine destination for subway teleportation!"
+            )
+            return
+        if self.player.has_pizza:
+            destination = self.get_current_delivery_location()
+        else:
+            destination = self.get_current_pickup_location()
+        closest_subway = self.find_closest_subway_to_destination(destination)
+
+        # Teleport player to the closest subway near the destination
+        self.player.center_x = closest_subway.center_x
+        self.player.center_y = closest_subway.center_y
+
+        print(
+            f"Teleported to subway at {closest_subway.address.avenue_street_address} (closest to destination)!"
+        )
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""

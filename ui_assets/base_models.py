@@ -82,27 +82,14 @@ class Location(arcade.Sprite):
         """Draw the location as a rectangle."""
         arcade.draw_rect_filled(self.rectangle, self.text_color)
         # If height is greater than width, draw the text vertically
-        if self.rectangle.height > self.rectangle.width:
-            arcade.draw_text(
-                self.address.name or self.address.avenue_street_address,
-                self.rectangle.center_x,
-                self.rectangle.center_y,
-                arcade.color.WHITE,
-                12,
-                align="center",
-                anchor_y="center",
-                anchor_x="center",
-                rotation=270,
-            )
-        else:
-            arcade.draw_text(
-                self.address.name or self.address.avenue_street_address,
-                self.rectangle.center_x,
-                self.rectangle.center_y,
-                arcade.color.WHITE,
-                12,
-                align="center",
-                anchor_y="center",
-                anchor_x="center",
-                rotation=0,
-            )
+        arcade.draw_text(
+            self.address.name or self.address.avenue_street_address,
+            self.rectangle.center_x,
+            self.rectangle.center_y,
+            arcade.color.WHITE,
+            12,
+            align="center",
+            anchor_y="center",
+            anchor_x="center",
+            rotation=270 if self.rectangle.height > self.rectangle.width else 0,
+        )

@@ -31,6 +31,7 @@ AVENUE_WIDTH = MAP_WIDTH // (AVENUES + 1)
 STREET_HEIGHT = MAP_HEIGHT // (STREETS + 1)
 
 # Game Mechanics Constants
+GAME_DURATION = 60.0  # Total game duration in seconds
 COLLISION_THRESHOLD = 40  # Distance threshold for pickup/delivery interactions
 
 # Default Address Spread Constants
