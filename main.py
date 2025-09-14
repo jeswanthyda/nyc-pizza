@@ -6,6 +6,7 @@ import arcade
 
 from constants import (
     COLLISION_THRESHOLD,
+    DEFAULT_PLAYER_SPEED,
     GAME_DURATION,
     MAP_HEIGHT,
     MAP_OFFSET_X,
@@ -90,6 +91,24 @@ class PizzaDeliveryGame(arcade.Window):
             print("Instructions shown - press 'i' again to hide")
         else:
             print("Instructions hidden")
+
+    def get_player_speed_multiplier(self):
+        """Get the speed multiplier based on player's current location in special locations."""
+        for location in self._special_locations:
+            # Check if player sprite collides with location sprite
+            if arcade.check_for_collision(self.player, location):
+                return location.player_speed_multiplier
+
+        # Default multiplier if not in any special location
+        return 1.0
+
+    def update_player_speed(self):
+        """Update player speed based on current location."""
+        multiplier = self.get_player_speed_multiplier()
+        new_speed = DEFAULT_PLAYER_SPEED * multiplier
+        self.player.set_speed(new_speed)
+        # Note: The player's update() method will automatically recalculate velocity
+        # based on the new speed if the player is currently moving
 
     def end_game(self):
         """End the game and show final score."""
@@ -356,6 +375,9 @@ class PizzaDeliveryGame(arcade.Window):
         if self.is_game_active:
             # Only update game logic if instructions overlay is not shown
             if not self._show_instructions_overlay:
+                # Update player speed based on special locations
+                self.update_player_speed()
+
                 self.player.update(delta_time)
                 # Update flash timer for highlighting effects
                 self.flash_timer += delta_time

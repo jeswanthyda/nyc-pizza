@@ -15,7 +15,7 @@ SIDEBAR_X = SCREEN_WIDTH - SIDEBAR_WIDTH
 
 # Player Constants
 PLAYER_SIZE = 50
-PLAYER_SPEED = 300  # pixels per second
+DEFAULT_PLAYER_SPEED = 300  # pixels per second
 
 
 # Manhattan Map Constants

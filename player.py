@@ -6,12 +6,12 @@ This module contains the PlayerCharacter class that represents the pizza deliver
 import arcade
 
 from constants import (
+    DEFAULT_PLAYER_SPEED,
     MAP_HEIGHT,
     MAP_OFFSET_X,
     MAP_OFFSET_Y,
     MAP_WIDTH,
     PLAYER_SIZE,
-    PLAYER_SPEED,
 )
 
 
@@ -26,37 +26,56 @@ class PlayerCharacter(arcade.Sprite):
         self.has_pizza = False
 
         # Movement properties
-        self.speed = PLAYER_SPEED
+        self._speed = DEFAULT_PLAYER_SPEED
         self.change_x = 0
         self.change_y = 0
+        self._current_direction = None  # Track current movement direction
 
         # Load the scooter image and scale it
         self.texture = arcade.load_texture("scooter.png")
         self.width = PLAYER_SIZE
         self.height = PLAYER_SIZE
 
+    @property
+    def speed(self):
+        return self._speed
+
+    def set_speed(self, speed_value):
+        """Set the player's speed to a specific value."""
+        self._speed = speed_value
+
     def move_direction(self, direction):
-        """Set movement velocity in the specified direction."""
-        if direction == "up":
-            self.change_y = self.speed
-            self.change_x = 0
-        elif direction == "down":
-            self.change_y = -self.speed
-            self.change_x = 0
-        elif direction == "left":
-            self.change_x = -self.speed
-            self.change_y = 0
-        elif direction == "right":
-            self.change_x = self.speed
-            self.change_y = 0
+        """Set movement direction. Velocity will be updated continuously based on current speed."""
+        self._current_direction = direction
+        self._update_velocity_from_direction()
 
     def stop_movement(self):
         """Stop all movement."""
         self.change_x = 0
         self.change_y = 0
+        self._current_direction = None
+
+    def _update_velocity_from_direction(self):
+        """Update velocity based on current direction and speed."""
+        if self._current_direction == "up":
+            self.change_y = self.speed
+            self.change_x = 0
+        elif self._current_direction == "down":
+            self.change_y = -self.speed
+            self.change_x = 0
+        elif self._current_direction == "left":
+            self.change_x = -self.speed
+            self.change_y = 0
+        elif self._current_direction == "right":
+            self.change_x = self.speed
+            self.change_y = 0
 
     def update(self, delta_time=0):
         """Update the delivery person's position with velocity."""
+        # Update velocity based on current direction and speed (this ensures speed changes are applied)
+        if self._current_direction is not None:
+            self._update_velocity_from_direction()
+
         # Update position based on velocity
         self.center_x += self.change_x * delta_time
         self.center_y += self.change_y * delta_time
