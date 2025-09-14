@@ -23,7 +23,7 @@ class Address:
         self,
         avenue_number: int,
         street_number: int,
-        name: str = "",
+        name: str | None = None,
         avenues_spread: int = 1,
         streets_spread: int = 5,
     ):
@@ -36,7 +36,7 @@ class Address:
     @property
     def avenue_street_address(self) -> str:
         """Get the address of the location."""
-        return f"{self.avenue_number}th Ave, {self.street_number}th St"
+        return f"{self.avenue_number}Av, {self.street_number}St"
 
     def to_arcade_rect(self) -> arcade.Rect:
         """
@@ -78,13 +78,18 @@ class BaseLocation(arcade.Sprite):
         self.width = self.rectangle.width
         self.height = self.rectangle.height
 
+    @property
+    def avenue_street_address(self) -> str:
+        """Get the avenue/street address of the location."""
+        return self.address.avenue_street_address
+
     def draw(self):
         """Draw the location as a rectangle."""
         arcade.draw_rect_filled(self.rectangle, self.text_color)
         # If height is greater than width, draw the text vertically
         if self.rectangle.height > self.rectangle.width:
             arcade.draw_text(
-                self.address.name,
+                self.address.name or self.address.avenue_street_address,
                 self.rectangle.center_x,
                 self.rectangle.center_y,
                 arcade.color.WHITE,
@@ -96,7 +101,7 @@ class BaseLocation(arcade.Sprite):
             )
         else:
             arcade.draw_text(
-                self.address.name,
+                self.address.name or self.address.avenue_street_address,
                 self.rectangle.center_x,
                 self.rectangle.center_y,
                 arcade.color.WHITE,
@@ -106,10 +111,6 @@ class BaseLocation(arcade.Sprite):
                 anchor_x="center",
                 rotation=0,
             )
-
-    def get_address(self) -> str:
-        """Get the address of the location."""
-        return self.address.avenue_street_address
 
 
 class CentralPark(BaseLocation):

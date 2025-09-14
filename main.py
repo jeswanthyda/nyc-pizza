@@ -114,6 +114,13 @@ class PizzaDeliveryGame(arcade.Window):
         self._special_locations = None
 
     @property
+    def player(self) -> arcade.Sprite:
+        """Setup the player."""
+        if self._player is None:
+            self._player = PlayerCharacter()
+        return self._player
+
+    @property
     def pizza_shops(self) -> Iterable[BaseLocation]:
         """Setup the pizza shops."""
         if self._pizza_shops is None:
@@ -128,7 +135,7 @@ class PizzaDeliveryGame(arcade.Window):
         """Setup the homes."""
         if self._homes is None:
             homes_list = []
-            homes_list.append(Home(Address(8, 8, "Home")))
+            homes_list.append(Home(Address(8, 8)))
             return homes_list
         return self._homes
 
@@ -140,13 +147,6 @@ class PizzaDeliveryGame(arcade.Window):
             special_locations_list.append(CentralPark())
             return special_locations_list
         return self._special_locations
-
-    @property
-    def player(self) -> arcade.Sprite:
-        """Setup the player."""
-        if self._player is None:
-            self._player = PlayerCharacter()
-        return self._player
 
     def on_draw(self):
         """Render the screen."""
