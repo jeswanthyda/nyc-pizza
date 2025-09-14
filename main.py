@@ -40,7 +40,10 @@ class PizzaDeliveryGame(arcade.Window):
         arcade.set_background_color(arcade.color.LIGHT_GRAY)
 
         # Game objects
-        self.score = 0
+        self.score = 0  # Net income (earned - spent)
+        self.earned = 0  # Money earned from pizza deliveries
+        self.spent = 0  # Money spent on subway usage
+        self.subway_usage_count = 0  # Track subway usage for cost calculation
         self.player_name = ""
         self._is_game_active = False
         self._show_instructions = False
@@ -123,6 +126,9 @@ class PizzaDeliveryGame(arcade.Window):
         self._show_instructions = False
         self._show_instructions_overlay = False
         self.score = 0
+        self.earned = 0
+        self.spent = 0
+        self.subway_usage_count = 0
         self.game_timer = 0.0
         self.current_order = None
         self.flash_timer = 0.0
@@ -142,7 +148,10 @@ class PizzaDeliveryGame(arcade.Window):
         """Log the final score with player name."""
         print("\n=== GAME OVER ===")
         print(f"Player: {self.player_name}")
-        print(f"Final Score: {self.score}")
+        print(f"Earned: ${self.earned} USD")
+        print(f"Spent: ${self.spent} USD")
+        print(f"Net Income: ${self.score} USD")
+        print(f"Subway Usage: {self.subway_usage_count} times")
         print("================\n")
 
     @property
@@ -250,9 +259,32 @@ class PizzaDeliveryGame(arcade.Window):
         )
         current_y -= 25
 
-        # Draw score
+        # Draw financial information
         arcade.draw_text(
-            f"Score: {self.score}", sidebar_text_x, current_y, arcade.color.BLACK, 16
+            f"Earned: ${self.earned} USD",
+            sidebar_text_x,
+            current_y,
+            arcade.color.GREEN,
+            14,
+        )
+        current_y -= 20
+
+        arcade.draw_text(
+            f"Spent: ${self.spent} USD",
+            sidebar_text_x,
+            current_y,
+            arcade.color.RED,
+            14,
+        )
+        current_y -= 20
+
+        arcade.draw_text(
+            f"Net Income: ${self.score} USD",
+            sidebar_text_x,
+            current_y,
+            arcade.color.BLUE,
+            16,
+            bold=True,
         )
         current_y -= 30
 
@@ -331,7 +363,7 @@ class PizzaDeliveryGame(arcade.Window):
             draw_game_instructions_dialog()
         # If game is over, draw the final score screen
         elif self.is_game_over:
-            draw_final_score(self.player_name, self.score)
+            draw_final_score(self.player_name, self.earned, self.spent, self.score)
 
         # If showing instructions overlay during active gameplay, draw it on top
         if self._show_instructions_overlay and self.is_game_active:
@@ -411,9 +443,10 @@ class PizzaDeliveryGame(arcade.Window):
             )
             if distance < COLLISION_THRESHOLD:
                 self.player.has_pizza = False
-                self.score += 1
+                self.earned += 10  # +10 USD per pizza delivery
+                self.score = self.earned - self.spent  # Update net income
                 print(
-                    f"Pizza delivered to {delivery_location.address.avenue_street_address}! Score: {self.score}"
+                    f"Pizza delivered to {delivery_location.address.avenue_street_address}! Earned: ${self.earned}, Net: ${self.score} USD"
                 )
                 # Complete the current order and immediately generate a new one
                 self.current_order = None
@@ -460,8 +493,13 @@ class PizzaDeliveryGame(arcade.Window):
         self.player.center_x = closest_subway.center_x
         self.player.center_y = closest_subway.center_y
 
+        # Deduct 1 USD for subway usage
+        self.spent += 1
+        self.score = self.earned - self.spent  # Update net income
+        self.subway_usage_count += 1
+
         print(
-            f"Teleported to subway at {closest_subway.address.avenue_street_address} (closest to destination)!"
+            f"Teleported to subway at {closest_subway.address.avenue_street_address} (closest to destination)! Spent: ${self.spent}, Net: ${self.score} USD"
         )
 
     def on_key_press(self, key, modifiers):

@@ -5,7 +5,7 @@ import arcade
 from constants import SCREEN_HEIGHT, SCREEN_WIDTH
 
 
-def draw_final_score(player_name: str, score: int):
+def draw_final_score(player_name: str, earned: int, spent: int, score: int):
     """Draw the final score screen overlay."""
     # Dialog box dimensions and positioning
     dialog_width = 500
@@ -53,11 +53,31 @@ def draw_final_score(player_name: str, score: int):
         anchor_y="center",
     )
 
-    # Draw final score
+    # Draw financial breakdown
     arcade.draw_text(
-        f"Final Score: {score}",
+        f"Earned: ${earned} USD",
         dialog_x + dialog_width // 2,
-        dialog_y + dialog_height - 160,
+        dialog_y + dialog_height - 150,
+        arcade.color.GREEN,
+        18,
+        anchor_x="center",
+        anchor_y="center",
+    )
+
+    arcade.draw_text(
+        f"Spent: ${spent} USD",
+        dialog_x + dialog_width // 2,
+        dialog_y + dialog_height - 175,
+        arcade.color.RED,
+        18,
+        anchor_x="center",
+        anchor_y="center",
+    )
+
+    arcade.draw_text(
+        f"Net Income: ${score} USD",
+        dialog_x + dialog_width // 2,
+        dialog_y + dialog_height - 200,
         arcade.color.BLUE,
         24,
         anchor_x="center",
