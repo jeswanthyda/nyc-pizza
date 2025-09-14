@@ -7,9 +7,7 @@ import random
 
 import arcade
 
-from ui_assets.base_models import Location
-from ui_assets.homes import HOMES
-from ui_assets.pizza_shops import PIZZA_SHOPS
+from map_locations import HOMES, PIZZA_SHOPS, Location
 
 
 class Order(arcade.Sprite):

@@ -1,6 +1,6 @@
 import arcade
 
-from ui_assets.base_models import Address, Location
+from map_locations.base_models import Address, Location
 
 __all__ = ["SUBWAYS"]
 
@@ -17,7 +17,7 @@ class Subway(Location):
             text_color=arcade.color.BLUE,
         )
         # Load the subway image texture
-        self.subway_texture = arcade.load_texture("subway.png")
+        self.subway_texture = arcade.load_texture("images/subway.png")
 
     def draw(self):
         """Draw the subway using the subway.png image."""

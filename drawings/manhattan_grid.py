@@ -1,4 +1,4 @@
-"""NYC Pizza Delivery Game - Map Layout Module."""
+"""NYC Pizza Delivery Game - Manhattan Grid Drawing."""
 
 import arcade
 
@@ -14,8 +14,8 @@ from constants import (
 )
 
 
-def draw_manhattan_map():
-    """Draw the Manhattan street grid."""
+def draw_manhattan_grid():
+    """Draw the Manhattan grid."""
     # Draw background (city blocks)
     background_rect = arcade.LRBT(
         MAP_OFFSET_X, MAP_OFFSET_X + MAP_WIDTH, MAP_OFFSET_Y, MAP_OFFSET_Y + MAP_HEIGHT

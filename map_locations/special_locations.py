@@ -1,6 +1,6 @@
 import arcade
 
-from ui_assets.base_models import Address, Location
+from map_locations.base_models import Address, Location
 
 __all__ = ["SPECIAL_LOCATIONS"]
 

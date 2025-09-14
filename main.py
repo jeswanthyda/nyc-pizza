@@ -17,19 +17,15 @@ from constants import (
     SCREEN_WIDTH,
     SIDEBAR_X,
 )
-from map_layout import (
-    draw_manhattan_map,
+from drawings import (
+    draw_final_score,
+    draw_game_instructions_dialog,
+    draw_manhattan_grid,
+    draw_name_input_dialog,
 )
-from orders import Order
-from player import PlayerCharacter
-from ui_assets.base_models import Location
-from ui_assets.final_score_dialog import draw_final_score
-from ui_assets.game_instructions_dialog import draw_game_instructions_dialog
-from ui_assets.homes import HOMES
-from ui_assets.name_input_dialog import draw_name_input_dialog
-from ui_assets.pizza_shops import PIZZA_SHOPS
-from ui_assets.special_locations import SPECIAL_LOCATIONS
-from ui_assets.subways import SUBWAYS
+from gameplay_sprites.orders import Order
+from gameplay_sprites.player import PlayerCharacter
+from map_locations import HOMES, PIZZA_SHOPS, SPECIAL_LOCATIONS, SUBWAYS, Location
 
 
 class PizzaDeliveryGame(arcade.Window):
@@ -374,7 +370,7 @@ class PizzaDeliveryGame(arcade.Window):
     def draw_game_screen(self):
         """Draw the normal game screen."""
         # Draw Manhattan map first
-        draw_manhattan_map()
+        draw_manhattan_grid()
 
         # Draw all sprites with highlighting
         for location in self.pizza_shops:

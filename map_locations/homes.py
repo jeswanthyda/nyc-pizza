@@ -1,6 +1,6 @@
 import arcade
 
-from ui_assets.base_models import Address, Location
+from map_locations.base_models import Address, Location
 
 __all__ = ["HOMES"]
 
@@ -19,7 +19,7 @@ class Home(Location):
             address=address,
             text_color=arcade.color.GREEN,
         )
-        self.home_texture = arcade.load_texture("home.png")
+        self.home_texture = arcade.load_texture("images/home.png")
 
     def draw(self):
         """Draw the home using the home texture."""

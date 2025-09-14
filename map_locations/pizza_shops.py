@@ -1,6 +1,6 @@
 import arcade
 
-from ui_assets.base_models import Address, Location
+from map_locations.base_models import Address, Location
 
 __all__ = ["PIZZA_SHOPS"]
 
@@ -25,8 +25,16 @@ class PizzaShop(Location):
 
 # Add pizza shops to the list here
 PIZZA_SHOPS = [
-    PizzaShop(Address(8, 42, "Joe's"), arcade.load_texture("joes.png")),
-    PizzaShop(Address(6, 33, "Papa J's"), arcade.load_texture("papajs.png")),
-    PizzaShop(Address(2, 86, "2Bro's"), arcade.load_texture("2bros.png")),
-    PizzaShop(Address(11, 120, "Joe's"), arcade.load_texture("joes.png")),
+    PizzaShop(
+        Address(8, 42, "Joe's"), arcade.load_texture("images/pizza_shops/joes.png")
+    ),
+    PizzaShop(
+        Address(6, 33, "Papa J's"), arcade.load_texture("images/pizza_shops/papajs.png")
+    ),
+    PizzaShop(
+        Address(2, 86, "2Bro's"), arcade.load_texture("images/pizza_shops/2bros.png")
+    ),
+    PizzaShop(
+        Address(11, 120, "Joe's"), arcade.load_texture("images/pizza_shops/joes.png")
+    ),
 ]

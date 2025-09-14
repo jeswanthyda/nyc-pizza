@@ -32,7 +32,7 @@ class PlayerCharacter(arcade.Sprite):
         self._current_direction = None  # Track current movement direction
 
         # Load the scooter image and scale it
-        self.texture = arcade.load_texture("scooter.png")
+        self.texture = arcade.load_texture("images/scooter.png")
         self.width = PLAYER_SIZE
         self.height = PLAYER_SIZE
 
