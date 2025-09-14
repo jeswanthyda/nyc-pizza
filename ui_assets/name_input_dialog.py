@@ -43,7 +43,7 @@ def draw_name_input_dialog(name_input_text: str):
     )
 
     # Draw instruction
-    instruction_text = "Enter your name:"
+    instruction_text = "Type your name:"
     arcade.draw_text(
         instruction_text,
         dialog_x + dialog_width // 2,
@@ -58,7 +58,7 @@ def draw_name_input_dialog(name_input_text: str):
     input_width = 300
     input_height = 40
     input_x = dialog_x + dialog_width // 2 - input_width // 2
-    input_y = dialog_y + dialog_height // 2 - 20
+    input_y = dialog_y + dialog_height // 2 - 40
 
     input_rect = arcade.LRBT(
         input_x, input_x + input_width, input_y, input_y + input_height
@@ -71,8 +71,8 @@ def draw_name_input_dialog(name_input_text: str):
     )
 
     # Draw current input text
-    display_text = name_input_text if name_input_text else "Type your name here..."
-    text_color = arcade.color.BLACK if name_input_text else arcade.color.GRAY
+    display_text = name_input_text
+    text_color = arcade.color.BLACK
 
     arcade.draw_text(
         display_text,

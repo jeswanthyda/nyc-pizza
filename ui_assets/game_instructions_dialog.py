@@ -8,8 +8,8 @@ from constants import GAME_DURATION, SCREEN_HEIGHT, SCREEN_WIDTH
 def draw_game_instructions_dialog(is_overlay=False):
     """Draw the game instructions dialog box overlay."""
     # Dialog box dimensions and positioning
-    dialog_width = 500
-    dialog_height = 400
+    dialog_width = 600
+    dialog_height = 500
     dialog_x = SCREEN_WIDTH // 2 - dialog_width // 2
     dialog_y = SCREEN_HEIGHT // 2 - dialog_height // 2
 
@@ -44,7 +44,7 @@ def draw_game_instructions_dialog(is_overlay=False):
 
     # Draw time limit information
     if is_overlay:
-        time_text = f"Game is PAUSED - You have {GAME_DURATION} seconds to earn as much USD as possible!"
+        time_text = "Game is PAUSED"
     else:
         time_text = f"You have {GAME_DURATION} seconds to earn as much USD as possible!"
 
@@ -120,10 +120,10 @@ def draw_game_instructions_dialog(is_overlay=False):
     arcade.draw_text(
         instruction_text,
         dialog_x + dialog_width // 2,
-        dialog_y + 30,
+        dialog_y + 10,
         arcade.color.BLUE,
         16,
         bold=True,
         anchor_x="center",
-        anchor_y="center",
+        anchor_y="bottom",
     )

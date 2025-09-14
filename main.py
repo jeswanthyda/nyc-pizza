@@ -148,9 +148,9 @@ class PizzaDeliveryGame(arcade.Window):
         """Log the final score with player name."""
         print("\n=== GAME OVER ===")
         print(f"Player: {self.player_name}")
-        print(f"Earned: ${self.earned} USD")
-        print(f"Spent: ${self.spent} USD")
-        print(f"Net Income: ${self.score} USD")
+        print(f"Earned: ${self.earned}")
+        print(f"Spent: ${self.spent}")
+        print(f"Net Income: ${self.score}")
         print(f"Subway Usage: {self.subway_usage_count} times")
         print("================\n")
 
@@ -261,7 +261,7 @@ class PizzaDeliveryGame(arcade.Window):
 
         # Draw financial information
         arcade.draw_text(
-            f"Earned: ${self.earned} USD",
+            f"Earned: ${self.earned} ",
             sidebar_text_x,
             current_y,
             arcade.color.GREEN,
@@ -270,7 +270,7 @@ class PizzaDeliveryGame(arcade.Window):
         current_y -= 20
 
         arcade.draw_text(
-            f"Spent: ${self.spent} USD",
+            f"Spent: ${self.spent} ",
             sidebar_text_x,
             current_y,
             arcade.color.RED,
@@ -279,7 +279,7 @@ class PizzaDeliveryGame(arcade.Window):
         current_y -= 20
 
         arcade.draw_text(
-            f"Net Income: ${self.score} USD",
+            f"Net Income: ${self.score} ",
             sidebar_text_x,
             current_y,
             arcade.color.BLUE,
@@ -443,10 +443,10 @@ class PizzaDeliveryGame(arcade.Window):
             )
             if distance < COLLISION_THRESHOLD:
                 self.player.has_pizza = False
-                self.earned += 10  # +10 USD per pizza delivery
+                self.earned += 10  # +$10 per pizza delivery
                 self.score = self.earned - self.spent  # Update net income
                 print(
-                    f"Pizza delivered to {delivery_location.address.avenue_street_address}! Earned: ${self.earned}, Net: ${self.score} USD"
+                    f"Pizza delivered to {delivery_location.address.avenue_street_address}! Earned: ${self.earned}, Net: ${self.score} "
                 )
                 # Complete the current order and immediately generate a new one
                 self.current_order = None
@@ -493,13 +493,13 @@ class PizzaDeliveryGame(arcade.Window):
         self.player.center_x = closest_subway.center_x
         self.player.center_y = closest_subway.center_y
 
-        # Deduct 1 USD for subway usage
+        # Deduct $1 for subway usage
         self.spent += 1
         self.score = self.earned - self.spent  # Update net income
         self.subway_usage_count += 1
 
         print(
-            f"Teleported to subway at {closest_subway.address.avenue_street_address} (closest to destination)! Spent: ${self.spent}, Net: ${self.score} USD"
+            f"Teleported to subway at {closest_subway.address.avenue_street_address} (closest to destination)! Spent: ${self.spent}, Net: ${self.score} "
         )
 
     def on_key_press(self, key, modifiers):

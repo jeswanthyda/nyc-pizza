@@ -55,7 +55,7 @@ def draw_final_score(player_name: str, earned: int, spent: int, score: int):
 
     # Draw financial breakdown
     arcade.draw_text(
-        f"Earned: ${earned} USD",
+        f"Earned: ${earned}",
         dialog_x + dialog_width // 2,
         dialog_y + dialog_height - 150,
         arcade.color.GREEN,
@@ -65,7 +65,7 @@ def draw_final_score(player_name: str, earned: int, spent: int, score: int):
     )
 
     arcade.draw_text(
-        f"Spent: ${spent} USD",
+        f"Spent: ${spent}",
         dialog_x + dialog_width // 2,
         dialog_y + dialog_height - 175,
         arcade.color.RED,
@@ -75,7 +75,7 @@ def draw_final_score(player_name: str, earned: int, spent: int, score: int):
     )
 
     arcade.draw_text(
-        f"Net Income: ${score} USD",
+        f"Net Income: ${score}",
         dialog_x + dialog_width // 2,
         dialog_y + dialog_height - 200,
         arcade.color.BLUE,
@@ -83,17 +83,6 @@ def draw_final_score(player_name: str, earned: int, spent: int, score: int):
         anchor_x="center",
         anchor_y="center",
         bold=True,
-    )
-
-    # Draw time message
-    arcade.draw_text(
-        "Time's up!",
-        dialog_x + dialog_width // 2,
-        dialog_y + dialog_height - 200,
-        arcade.color.GRAY,
-        16,
-        anchor_x="center",
-        anchor_y="center",
     )
 
     # Draw instructions
