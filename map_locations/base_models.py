@@ -85,3 +85,82 @@ class Location(arcade.Sprite, ABC):
     def draw(self):
         """Draw the location as a rectangle."""
         raise NotImplementedError("Subclasses must implement this method")
+
+
+class PizzaShop(Location):
+    """Class representing a Pizza shop in Manhattan. Coloured in red.
+    Args:
+        address (Address): Address of the pizza shop
+    """
+
+    def __init__(self, address: Address, logo_texture: arcade.Texture):
+        super().__init__(address=address)
+        self.logo_texture = logo_texture
+
+    def draw(self):
+        """Draw the pizza shop using the logo texture."""
+        arcade.draw_texture_rect(self.logo_texture, self.arcade_rect, pixelated=True)
+
+
+class Subway(Location):
+    """Class representing a Subway in Manhattan.
+    Args:
+        address (Address): Address of the subway
+    """
+
+    def __init__(self, address: Address):
+        super().__init__(address=address)
+        # Load the subway image texture
+        self.subway_texture = arcade.load_texture("images/subway.png")
+
+    def draw(self):
+        """Draw the subway using the subway.png image."""
+        # Draw the subway image
+        arcade.draw_texture_rect(self.subway_texture, self.arcade_rect, pixelated=True)
+
+
+class Home(Location):
+    """Home location in Manhattan. Coloured in green.
+    Args:
+        address (Address): Address of the home
+    """
+
+    def __init__(self, address: Address):
+        super().__init__(address=address)
+        self.home_texture = arcade.load_texture("images/home.png")
+
+    def draw(self):
+        """Draw the home using the home texture."""
+        arcade.draw_texture_rect(self.home_texture, self.arcade_rect, pixelated=True)
+
+
+class SpeedMultiplierLocation(Location):
+    """Base class for locations that have a speed multiplier."""
+
+    def __init__(
+        self,
+        address: Address,
+        speed_multiplier: float = 1.0,
+        block_color: arcade.color.Color = arcade.color.LIGHT_APRICOT,
+    ):
+        super().__init__(address=address)
+        self.speed_multiplier = speed_multiplier
+        self.block_color = block_color
+
+    @property
+    def player_speed_multiplier(self):
+        return self.speed_multiplier
+
+    def draw(self):
+        arcade.draw_rect_filled(self.arcade_rect, self.block_color)
+        arcade.draw_text(
+            self.address.name or self.avenue_street_address,
+            self.arcade_rect.center_x,
+            self.arcade_rect.center_y,
+            arcade.color.BLACK,
+            12,
+            align="center",
+            anchor_y="center",
+            anchor_x="center",
+            rotation=270 if self.arcade_rect.height > self.arcade_rect.width else 0,
+        )

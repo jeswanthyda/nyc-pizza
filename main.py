@@ -25,7 +25,13 @@ from drawings import (
 )
 from gameplay_sprites.orders import Order
 from gameplay_sprites.player import PlayerCharacter
-from map_locations import HOMES, PIZZA_SHOPS, SPECIAL_LOCATIONS, SUBWAYS, Location
+from map_locations import (
+    HOMES,
+    PIZZA_SHOPS,
+    SPEED_MULTIPLIER_LOCATIONS,
+    SUBWAYS,
+    Location,
+)
 
 
 class PizzaDeliveryGame(arcade.Window):
@@ -50,7 +56,7 @@ class PizzaDeliveryGame(arcade.Window):
         self._player = PlayerCharacter()
         self._pizza_shops = PIZZA_SHOPS
         self._homes = HOMES
-        self._special_locations = SPECIAL_LOCATIONS
+        self._speed_multipler_locations = SPEED_MULTIPLIER_LOCATIONS
         self._subways = SUBWAYS
 
         # Order management
@@ -92,13 +98,13 @@ class PizzaDeliveryGame(arcade.Window):
             print("Instructions hidden")
 
     def get_player_speed_multiplier(self):
-        """Get the speed multiplier based on player's current location in special locations."""
-        for location in self._special_locations:
+        """Get the speed multiplier based on player's current location in speed multiplier locations."""
+        for location in self._speed_multipler_locations:
             # Check if player sprite collides with location sprite
             if arcade.check_for_collision(self.player, location):
                 return location.player_speed_multiplier
 
-        # Default multiplier if not in any special location
+        # Default multiplier if not in any speed multiplier location
         return 1.0
 
     def update_player_speed(self):
@@ -176,9 +182,9 @@ class PizzaDeliveryGame(arcade.Window):
         return self._homes
 
     @property
-    def special_locations(self) -> Iterable[Location]:
-        """Get the special locations."""
-        return self._special_locations
+    def speed_multiplier_locations(self) -> Iterable[Location]:
+        """Get the speed multiplier locations."""
+        return self._speed_multipler_locations
 
     @property
     def subways(self) -> Iterable[Location]:
@@ -377,7 +383,7 @@ class PizzaDeliveryGame(arcade.Window):
             location.draw()
         for location in self.homes:
             location.draw()
-        for location in self.special_locations:
+        for location in self.speed_multiplier_locations:
             location.draw()
         for location in self.subways:
             location.draw()
@@ -405,7 +411,7 @@ class PizzaDeliveryGame(arcade.Window):
         if self.is_game_active:
             # Only update game logic if instructions overlay is not shown
             if not self._show_instructions_overlay:
-                # Update player speed based on special locations
+                # Update player speed based on speed multiplier locations
                 self.update_player_speed()
 
                 self.player.update(delta_time)

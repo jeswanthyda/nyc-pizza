@@ -1,23 +1,6 @@
-import arcade
-
-from map_locations.base_models import Address, Location
+from map_locations.base_models import Address, Home
 
 __all__ = ["HOMES"]
-
-
-class Home(Location):
-    """Home location in Manhattan. Coloured in green.
-    Args:
-        address (Address): Address of the home
-    """
-
-    def __init__(self, address: Address):
-        super().__init__(address=address)
-        self.home_texture = arcade.load_texture("images/home.png")
-
-    def draw(self):
-        """Draw the home using the home texture."""
-        arcade.draw_texture_rect(self.home_texture, self.arcade_rect, pixelated=True)
 
 
 # Add homes to the list here

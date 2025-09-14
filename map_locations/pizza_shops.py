@@ -1,23 +1,8 @@
 import arcade
 
-from map_locations.base_models import Address, Location
+from map_locations.base_models import Address, PizzaShop
 
 __all__ = ["PIZZA_SHOPS"]
-
-
-class PizzaShop(Location):
-    """Class representing a Pizza shop in Manhattan. Coloured in red.
-    Args:
-        address (Address): Address of the pizza shop
-    """
-
-    def __init__(self, address: Address, logo_texture: arcade.Texture):
-        super().__init__(address=address)
-        self.logo_texture = logo_texture
-
-    def draw(self):
-        """Draw the pizza shop using the logo texture."""
-        arcade.draw_texture_rect(self.logo_texture, self.arcade_rect, pixelated=True)
 
 
 # Add pizza shops to the list here
