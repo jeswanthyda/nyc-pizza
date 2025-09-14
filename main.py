@@ -1,5 +1,7 @@
 """NYC Pizza Delivery Game - Main entry point."""
 
+from typing import Iterable
+
 import arcade
 
 from map_layout import (
@@ -8,6 +10,7 @@ from map_layout import (
     MAP_OFFSET_Y,
     MAP_WIDTH,
     Address,
+    BaseLocation,
     CentralPark,
     Home,
     PizzaShop,
@@ -103,44 +106,47 @@ class PizzaDeliveryGame(arcade.Window):
         arcade.set_background_color(arcade.color.LIGHT_GRAY)
 
         # Game objects
-        self.player_character = None
-        self.joes_pizza = None
-        self.papas_pizza = None
-        self.home = None
         self.score = 0
 
-        # Sprite lists
-        self.player_list = None
-        self.location_list = None
+        self._player = None
+        self._pizza_shops = None
+        self._homes = None
+        self._special_locations = None
 
-    def _setup_pizza_shops(self):
+    @property
+    def pizza_shops(self) -> Iterable[BaseLocation]:
         """Setup the pizza shops."""
-        self.joes_pizza = PizzaShop(Address(3, 6, "Joe's Pizza"))
-        self.papas_pizza = PizzaShop(Address(7, 12, "Papa's Pizza"))
-        self.location_list.append(self.joes_pizza)
-        self.location_list.append(self.papas_pizza)
+        if self._pizza_shops is None:
+            pizza_shop_list = []
+            pizza_shop_list.append(PizzaShop(Address(3, 6, "Joe's")))
+            pizza_shop_list.append(PizzaShop(Address(7, 12, "Papa J's")))
+            return pizza_shop_list
+        return self._pizza_shops
 
-    def _setup_homes(self):
+    @property
+    def homes(self) -> Iterable[BaseLocation]:
         """Setup the homes."""
-        self.home = Home(Address(8, 8, "Home"))
-        self.location_list.append(self.home)
+        if self._homes is None:
+            homes_list = []
+            homes_list.append(Home(Address(8, 8, "Home")))
+            return homes_list
+        return self._homes
 
-    def setup(self):
-        """Set up the game variables."""
-        # Create sprite lists
-        self.player_list = arcade.SpriteList()
-        self.location_list = arcade.SpriteList()
+    @property
+    def special_locations(self) -> Iterable[BaseLocation]:
+        """Setup the special locations."""
+        if self._special_locations is None:
+            special_locations_list = []
+            special_locations_list.append(CentralPark())
+            return special_locations_list
+        return self._special_locations
 
-        # Create delivery boy
-        self.player_character = PlayerCharacter()
-        self.player_list.append(self.player_character)
-
-        self._setup_pizza_shops()
-        self._setup_homes()
-
-        # Create Central Park location
-        self.central_park = CentralPark()
-        self.location_list.append(self.central_park)
+    @property
+    def player(self) -> arcade.Sprite:
+        """Setup the player."""
+        if self._player is None:
+            self._player = PlayerCharacter()
+        return self._player
 
     def on_draw(self):
         """Render the screen."""
@@ -150,13 +156,17 @@ class PizzaDeliveryGame(arcade.Window):
         draw_manhattan_map()
 
         # Draw all sprites
-        for location in self.location_list:
+        for location in self.pizza_shops:
+            location.draw()
+        for location in self.homes:
+            location.draw()
+        for location in self.special_locations:
             location.draw()
 
-        # Draw home with custom text
-        self.home.draw()
-
-        self.player_list.draw()
+        # Draw player character
+        player_list = arcade.SpriteList()
+        player_list.append(self.player)
+        player_list.draw()
 
         # Draw UI
         arcade.draw_text(
@@ -173,7 +183,7 @@ class PizzaDeliveryGame(arcade.Window):
         )
 
         # Draw instructions
-        if not self.player_character.has_pizza:
+        if not self.player.has_pizza:
             arcade.draw_text(
                 "Go to Joe's Pizza or Papa's Pizza (RED) and press SPACE to pick up pizza!",
                 10,
@@ -200,58 +210,53 @@ class PizzaDeliveryGame(arcade.Window):
         )
 
         # Draw pizza indicator
-        if self.player_character.has_pizza:
+        if self.player.has_pizza:
             arcade.draw_circle_filled(
-                self.player_character.center_x,
-                self.player_character.center_y + 30,
+                self.player.center_x,
+                self.player.center_y + 30,
                 8,
                 arcade.color.YELLOW,
             )
 
     def on_update(self, delta_time):
         """Movement and game logic."""
-        self.player_list.update(delta_time)
+        self.player.update(delta_time)
 
     def handle_space_action(self):
         """Handle space bar action for pizza pickup and dropoff."""
         # Check for pizza pickup using distance-based collision detection
-        if not self.player_character.has_pizza:
-            # Check distance to Joe's Pizza
-            distance_joes = arcade.get_distance_between_sprites(
-                self.player_character, self.joes_pizza
-            )
-            # Check distance to Papa's Pizza
-            distance_papas = arcade.get_distance_between_sprites(
-                self.player_character, self.papas_pizza
-            )
-
-            if distance_joes < 40:  # Collision threshold
-                self.player_character.has_pizza = True
-                print("Pizza picked up from Joe's Pizza!")
-            elif distance_papas < 40:  # Collision threshold
-                self.player_character.has_pizza = True
-                print("Pizza picked up from Papa's Pizza!")
+        if not self.player.has_pizza:
+            # Check distance to any pizza shop
+            for pizza_shop in self.pizza_shops:
+                distance = arcade.get_distance_between_sprites(self.player, pizza_shop)
+                if distance < 40:  # Collision threshold
+                    self.player.has_pizza = True
+                    print(f"Pizza picked up from {pizza_shop.address.name}!")
+                    break
 
         # Check for pizza delivery using distance-based collision detection
-        elif self.player_character.has_pizza:
-            distance = arcade.get_distance_between_sprites(
-                self.player_character, self.home
-            )
-            if distance < 40:  # Collision threshold
-                self.player_character.has_pizza = False
-                self.score += 1
-                print(f"Pizza delivered! Score: {self.score}")
+        elif self.player.has_pizza:
+            # Check distance to any home
+            for home in self.homes:
+                distance = arcade.get_distance_between_sprites(self.player, home)
+                if distance < 40:  # Collision threshold
+                    self.player.has_pizza = False
+                    self.score += 1
+                    print(
+                        f"Pizza delivered to {home.address.name}! Score: {self.score}"
+                    )
+                    break
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
         if key == arcade.key.UP or key == arcade.key.W:
-            self.player_character.move_direction("up")
+            self.player.move_direction("up")
         elif key == arcade.key.DOWN or key == arcade.key.S:
-            self.player_character.move_direction("down")
+            self.player.move_direction("down")
         elif key == arcade.key.LEFT or key == arcade.key.A:
-            self.player_character.move_direction("left")
+            self.player.move_direction("left")
         elif key == arcade.key.RIGHT or key == arcade.key.D:
-            self.player_character.move_direction("right")
+            self.player.move_direction("right")
         elif key == arcade.key.SPACE:
             self.handle_space_action()
         elif key == arcade.key.ESCAPE:
@@ -270,13 +275,12 @@ class PizzaDeliveryGame(arcade.Window):
             or key == arcade.key.RIGHT
             or key == arcade.key.D
         ):
-            self.player_character.stop_movement()
+            self.player.stop_movement()
 
 
 def main():
     """Main function."""
-    game = PizzaDeliveryGame()
-    game.setup()
+    PizzaDeliveryGame()
     arcade.run()
 
 
