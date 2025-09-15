@@ -5,7 +5,8 @@ from typing import Optional
 
 import httpx
 
-from .server.schemas import SessionCreate, SessionResponse, SessionUpdate
+from .db.models import Session
+from .server.schemas import SessionCreate, SessionUpdate
 
 
 class FastAPIClient:
@@ -34,7 +35,7 @@ class FastAPIClient:
 
     def create_session(
         self, player_name: str, earned: float = 0.0, spent: float = 0.0
-    ) -> Optional[SessionResponse]:
+    ) -> Optional[Session]:
         """Create a new game session."""
         session_id = str(uuid.uuid4())
         session_data = SessionCreate(
@@ -50,14 +51,14 @@ class FastAPIClient:
                 f"{self.base_url}/sessions/", json=session_data.dict()
             )
             response.raise_for_status()
-            return SessionResponse(**response.json())
+            return Session(**response.json())
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
             print(f"Failed to create session: {e}")
             return None
 
     def update_session(
         self, session_id: str, earned: float, spent: float
-    ) -> Optional[SessionResponse]:
+    ) -> Optional[Session]:
         """Update an existing session with final scores."""
         session_update = SessionUpdate(
             earned=earned, spent=spent, net_income=earned - spent
@@ -69,27 +70,27 @@ class FastAPIClient:
                 json=session_update.dict(exclude_unset=True),
             )
             response.raise_for_status()
-            return SessionResponse(**response.json())
+            return Session(**response.json())
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
             print(f"Failed to update session: {e}")
             return None
 
-    def get_session(self, session_id: str) -> Optional[SessionResponse]:
+    def get_session(self, session_id: str) -> Optional[Session]:
         """Get a session by session ID."""
         try:
             response = self.client.get(f"{self.base_url}/sessions/{session_id}")
             response.raise_for_status()
-            return SessionResponse(**response.json())
+            return Session(**response.json())
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
             print(f"Failed to get session: {e}")
             return None
 
-    def get_sessions_by_player(self, player_name: str) -> list[SessionResponse]:
+    def get_sessions_by_player(self, player_name: str) -> list[Session]:
         """Get all sessions for a specific player."""
         try:
             response = self.client.get(f"{self.base_url}/sessions/player/{player_name}")
             response.raise_for_status()
-            return [SessionResponse(**session) for session in response.json()]
+            return [Session(**session) for session in response.json()]
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
             print(f"Failed to get sessions for player: {e}")
             return []

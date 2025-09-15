@@ -3,28 +3,23 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-
-class SessionBase(BaseModel):
-    player_name: str
-    session_id: str
-    earned: float = 0.0
-    spent: float = 0.0
-    net_income: float = 0.0
+from backend.db.models import Session
 
 
-class SessionCreate(SessionBase):
-    pass
+class SessionCreate(Session):
+    """Schema for creating a new session"""
+
+    # Inherit all fields from Session but make timestamp optional for creation
+    timestamp: Optional[datetime] = None
 
 
 class SessionUpdate(BaseModel):
+    """Schema for updating a session"""
+
+    # All fields optional for updates
     player_name: Optional[str] = None
+    session_id: Optional[str] = None
+    timestamp: Optional[datetime] = None
     earned: Optional[float] = None
     spent: Optional[float] = None
     net_income: Optional[float] = None
-
-
-class SessionResponse(SessionBase):
-    timestamp: datetime
-
-    class Config:
-        from_attributes = True

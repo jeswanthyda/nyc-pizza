@@ -18,3 +18,11 @@ install:
 
 # Run all checks (format + lint)
 all: format lint
+
+# Run the FastAPI backend server
+run_backend_server:
+	uv run python run_backend.py
+
+# Run the NYC Pizza game (requires backend to be running)
+run_game:
+	uv run python main.py

@@ -1,11 +1,11 @@
 import sqlite3
 from typing import List, Optional
 
-from ..db.models import Session
-from .schemas import SessionCreate, SessionUpdate
+from backend.db.models import Session
+from backend.server.schemas import SessionCreate, SessionUpdate
 
 
-class SessionsCRUD:
+class SessionsHandler:
     """CRUD operations for sessions"""
 
     def __init__(self, db: sqlite3.Connection):
@@ -33,12 +33,12 @@ class SessionsCRUD:
         self.db.commit()
 
         # Get the created session
-        created_session = self.get_session_by_session_id(session_data["session_id"])
+        created_session = self.get_session_by_id(session_data["session_id"])
         if created_session is None:
             raise RuntimeError("Failed to create session")
         return created_session
 
-    def get_session_by_session_id(self, session_id: str) -> Optional[Session]:
+    def get_session_by_id(self, session_id: str) -> Optional[Session]:
         """Get a session by id"""
         cursor = self.db.execute(
             "SELECT * FROM sessions WHERE session_id = ?", (session_id,)
@@ -56,7 +56,7 @@ class SessionsCRUD:
         update_data = session_update.model_dump(exclude_unset=True)
 
         if not update_data:
-            return self.get_session_by_session_id(session_id)
+            return self.get_session_by_id(session_id)
 
         # Build dynamic update query
         set_clauses = [f"{field} = ?" for field in update_data.keys()]
@@ -71,15 +71,7 @@ class SessionsCRUD:
         self.db.execute(query, params)
         self.db.commit()
 
-        return self.get_session_by_session_id(session_id)
-
-    def delete_session(self, session_id: str) -> bool:
-        """Delete a session"""
-        cursor = self.db.execute(
-            "DELETE FROM sessions WHERE session_id = ?", (session_id,)
-        )
-        self.db.commit()
-        return cursor.rowcount > 0
+        return self.get_session_by_id(session_id)
 
     def get_all_sessions(self, skip: int = 0, limit: int = 100) -> List[Session]:
         """Get all sessions with pagination"""
