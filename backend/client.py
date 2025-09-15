@@ -1,9 +1,15 @@
 """FastAPI client for logging game sessions to the database."""
 
+import sys
 import uuid
+from pathlib import Path
 from typing import Optional
 
 import httpx
+
+# Add parent directory to path to import logging_utils
+sys.path.append(str(Path(__file__).parent.parent))
+from logging_utils import get_logger
 
 from .db.models import Session
 from .server.schemas import SessionCreate, SessionUpdate
@@ -16,6 +22,7 @@ class FastAPIClient:
         """Initialize the client with the server base URL."""
         self.base_url = base_url.rstrip("/")
         self.client = httpx.Client(timeout=10.0)
+        self.logger = get_logger(__name__)
 
     def __enter__(self):
         """Context manager entry."""
@@ -53,7 +60,7 @@ class FastAPIClient:
             response.raise_for_status()
             return Session(**response.json())
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
-            print(f"Failed to create session: {e}")
+            self.logger.error(f"Failed to create session: {e}")
             return None
 
     def update_session(
@@ -72,7 +79,7 @@ class FastAPIClient:
             response.raise_for_status()
             return Session(**response.json())
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
-            print(f"Failed to update session: {e}")
+            self.logger.error(f"Failed to update session: {e}")
             return None
 
     def get_session(self, session_id: str) -> Optional[Session]:
@@ -82,7 +89,7 @@ class FastAPIClient:
             response.raise_for_status()
             return Session(**response.json())
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
-            print(f"Failed to get session: {e}")
+            self.logger.error(f"Failed to get session: {e}")
             return None
 
     def get_sessions_by_player(self, player_name: str) -> list[Session]:
@@ -92,5 +99,5 @@ class FastAPIClient:
             response.raise_for_status()
             return [Session(**session) for session in response.json()]
         except (httpx.RequestError, httpx.HTTPStatusError) as e:
-            print(f"Failed to get sessions for player: {e}")
+            self.logger.error(f"Failed to get sessions for player: {e}")
             return []
