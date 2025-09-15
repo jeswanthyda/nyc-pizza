@@ -18,6 +18,7 @@ HOMES = [
     Home(Address(3, 26)),
     Home(Address(3, 34)),
     Home(Address(3, 42)),
+    Home(Address(3, 71)),
     Home(Address(3, 98)),
     Home(Address(3, 125)),
     # 4th avenue
@@ -25,6 +26,7 @@ HOMES = [
     Home(Address(4, 35)),
     Home(Address(4, 34)),
     Home(Address(4, 42)),
+    Home(Address(4, 71)),
     Home(Address(4, 98)),
     Home(Address(4, 125)),
     # 5th avenue
@@ -38,6 +40,7 @@ HOMES = [
     # 8th avenue
     Home(Address(8, 8)),
     Home(Address(8, 88)),
+    Home(Address(8, 71)),
     Home(Address(8, 125)),
     # 10th avenue
     Home(Address(10, 45)),
@@ -50,12 +53,14 @@ HOMES = [
     Home(Address(10, 17)),
     Home(Address(10, 7)),
     Home(Address(10, 125)),
+    Home(Address(10, 120)),
+    Home(Address(10, 106)),
+    Home(Address(10, 102)),
     Home(Address(10, 57)),
     Home(Address(10, 47)),
     Home(Address(10, 37)),
     # 11th avenue
     Home(Address(11, 125)),
-    Home(Address(11, 120)),
     Home(Address(11, 115)),
     Home(Address(11, 105)),
     Home(Address(11, 95)),
