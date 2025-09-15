@@ -90,3 +90,21 @@ class SessionsHandler:
         )
         rows = cursor.fetchall()
         return [Session.from_row(row) for row in rows]
+
+    def get_leaderboard(self, limit: int = 10) -> List[Session]:
+        """Get top sessions by net income for leaderboard"""
+        cursor = self.db.execute(
+            "SELECT * FROM sessions ORDER BY net_income DESC LIMIT ?",
+            (limit,),
+        )
+        rows = cursor.fetchall()
+        return [Session.from_row(row) for row in rows]
+
+    def get_player_best_score(self, player_name: str) -> Optional[Session]:
+        """Get the best score for a specific player"""
+        cursor = self.db.execute(
+            "SELECT * FROM sessions WHERE player_name = ? ORDER BY net_income DESC LIMIT 1",
+            (player_name,),
+        )
+        row = cursor.fetchone()
+        return Session.from_row(row) if row else None

@@ -73,6 +73,8 @@ def draw_game_instructions_dialog(is_overlay=False):
         "• WASD or Arrow Keys: Move your character",
         "• SPACE: Pick up pizza or deliver it",
         "• SPACE at subway: Teleport to closest subway to your destination",
+        "• I: Show/hide instructions during game",
+        "• L: Show leaderboard during game",
         "",
         "TIPS:",
         "• Your destination is highlighted in MAGENTA for easier navigation",
@@ -116,7 +118,7 @@ def draw_game_instructions_dialog(is_overlay=False):
 
     # Draw start instruction
     if is_overlay:
-        instruction_text = "Press 'i' to hide instructions"
+        instruction_text = "Press 'i' to hide instructions | Press 'l' for leaderboard"
     else:
         instruction_text = "Press ENTER to start the game!"
 

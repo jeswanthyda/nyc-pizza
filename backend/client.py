@@ -107,3 +107,19 @@ class FastAPIClient:
         return (
             [Session(**session) for session in response_data] if response_data else []
         )
+
+    def get_leaderboard(self, limit: int = 10) -> list[Session]:
+        """Get the leaderboard with top scores."""
+        response_data = self._make_request(
+            "GET", f"/leaderboard/?limit={limit}", "get leaderboard"
+        )
+        return (
+            [Session(**session) for session in response_data] if response_data else []
+        )
+
+    def get_player_best_score(self, player_name: str) -> Optional[Session]:
+        """Get the best score for a specific player."""
+        response_data = self._make_request(
+            "GET", f"/leaderboard/player/{player_name}", "get player best score"
+        )
+        return Session(**response_data) if response_data else None

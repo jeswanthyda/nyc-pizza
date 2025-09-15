@@ -31,6 +31,7 @@ from score_tracker import ScoreTracker
 from static_drawings import (
     draw_final_score,
     draw_game_instructions_dialog,
+    draw_leaderboard_dialog,
     draw_manhattan_grid,
     draw_name_input_dialog,
 )
@@ -303,8 +304,21 @@ class PizzaDeliveryGame(arcade.Window):
                 self.score_tracker.spent,
                 self.score_tracker.score,
             )
+        elif self.game_state_manager.game_state == GameState.GAME_OVER_WITH_LEADERBOARD:
+            draw_final_score(
+                self.player_name,
+                self.score_tracker.earned,
+                self.score_tracker.spent,
+                self.score_tracker.score,
+                leaderboard=self.game_state_manager.leaderboard_data,
+                show_leaderboard=True,
+            )
         elif self.game_state_manager.game_state == GameState.ACTIVE_WITH_OVERLAY:
             draw_game_instructions_dialog(is_overlay=True)
+        elif self.game_state_manager.game_state == GameState.SHOWING_LEADERBOARD:
+            draw_leaderboard_dialog(
+                self.game_state_manager.leaderboard_data, self.player_name
+            )
 
     def on_update(self, delta_time):
         """Movement and game logic."""
@@ -407,8 +421,14 @@ class PizzaDeliveryGame(arcade.Window):
             return
 
         # State-specific key handling
-        if self.game_state_manager.is_game_over:
+        if (
+            self.game_state_manager.is_game_over
+            or self.game_state_manager.game_state
+            == GameState.GAME_OVER_WITH_LEADERBOARD
+        ):
             self._handle_game_over_key(key)
+        elif self.game_state_manager.game_state == GameState.SHOWING_LEADERBOARD:
+            self._handle_leaderboard_key(key)
         elif not self.game_state_manager.is_game_active:
             self._handle_menu_key(key)
         else:
@@ -418,6 +438,19 @@ class PizzaDeliveryGame(arcade.Window):
         """Handle keys when game is over."""
         if key == arcade.key.R:
             self.game_state_manager.restart_game()
+        elif key == arcade.key.L:
+            if self.game_state_manager.game_state == GameState.GAME_OVER:
+                self.game_state_manager.show_leaderboard_in_game_over()
+            elif (
+                self.game_state_manager.game_state
+                == GameState.GAME_OVER_WITH_LEADERBOARD
+            ):
+                self.game_state_manager.hide_leaderboard()
+
+    def _handle_leaderboard_key(self, key):
+        """Handle keys when showing leaderboard."""
+        if key == arcade.key.L:
+            self.game_state_manager.hide_leaderboard()
 
     def _handle_menu_key(self, key):
         """Handle keys in menu states."""
@@ -444,6 +477,8 @@ class PizzaDeliveryGame(arcade.Window):
         """Handle keys during active gameplay."""
         if key == arcade.key.I:
             self.game_state_manager.toggle_instructions_overlay()
+        elif key == arcade.key.L:
+            self.game_state_manager.show_leaderboard()
         elif key == arcade.key.ESCAPE:
             self.log_final_score()
         # Only allow movement and actions if not showing instructions overlay

@@ -1,11 +1,12 @@
 import sqlite3
 from typing import List
 
+from fastapi import Depends, FastAPI, HTTPException, status
+
 from backend.db.connection import get_db_dependency
 from backend.db.models import Session
 from backend.server.schemas import SessionCreate, SessionUpdate
 from backend.server.sessions_handler import SessionsHandler
-from fastapi import Depends, FastAPI, HTTPException, status
 from logging_utils import get_logger
 
 logger = get_logger(__name__)
@@ -108,6 +109,30 @@ async def update_existing_session(
         )
     logger.info(f"Successfully updated session: {session_id}")
     return session
+
+
+@app.get("/leaderboard/", response_model=List[Session])
+async def get_leaderboard(
+    limit: int = 10, db: sqlite3.Connection = Depends(get_db_dependency)
+):
+    """Get the leaderboard with top scores"""
+    handler = SessionsHandler(db)
+    leaderboard = handler.get_leaderboard(limit=limit)
+    return leaderboard
+
+
+@app.get("/leaderboard/player/{player_name}", response_model=Session)
+async def get_player_best_score(
+    player_name: str, db: sqlite3.Connection = Depends(get_db_dependency)
+):
+    """Get the best score for a specific player"""
+    handler = SessionsHandler(db)
+    best_score = handler.get_player_best_score(player_name)
+    if best_score is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="No scores found for player"
+        )
+    return best_score
 
 
 @app.get("/health")
