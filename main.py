@@ -1,10 +1,9 @@
 """NYC Pizza Delivery Game - Main entry point."""
 
-from typing import Iterable, Optional
+from typing import Iterable
 
 import arcade
 
-from backend.client import FastAPIClient
 from constants import (
     COLLISION_THRESHOLD,
     DEFAULT_PLAYER_SPEED,
@@ -12,7 +11,6 @@ from constants import (
     MAP_HEIGHT,
     MAP_OFFSET_X,
     MAP_OFFSET_Y,
-    MAP_WIDTH,
     SCREEN_HEIGHT,
     SCREEN_TITLE,
     SCREEN_WIDTH,
@@ -24,6 +22,7 @@ from drawings import (
     draw_manhattan_grid,
     draw_name_input_dialog,
 )
+from game_state_manager import GameState, GameStateManager
 from gameplay_sprites.orders import Order
 from gameplay_sprites.player import PlayerCharacter
 from logging_utils import get_logger
@@ -34,6 +33,10 @@ from map_locations import (
     SUBWAYS,
     Location,
 )
+from session_manager import SessionManager
+
+# Initialize logger at module level
+logger = get_logger(__name__)
 
 
 class PizzaDeliveryGame(arcade.Window):
@@ -43,23 +46,19 @@ class PizzaDeliveryGame(arcade.Window):
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
         arcade.set_background_color(arcade.color.LIGHT_GRAY)
 
-        # Initialize logger
-        self.logger = get_logger(__name__)
-
         # Game objects
         self.score = 0  # Net income (earned - spent)
         self.earned = 0  # Money earned from pizza deliveries
         self.spent = 0  # Money spent on subway usage
         self.subway_usage_count = 0  # Track subway usage for cost calculation
         self.player_name = ""
-        self._is_game_active = False
-        self._show_instructions = False
-        self._show_instructions_overlay = False
         self.name_input_text = ""
 
-        # Session tracking
-        self.session_id: Optional[str] = None
-        self.api_client: Optional[FastAPIClient] = None
+        # Initialize session manager
+        self.session_manager = SessionManager()
+
+        # Initialize game state transitions
+        self.game_state_manager = GameStateManager(self)
 
         # Initialize game objects
         self._player = PlayerCharacter()
@@ -75,108 +74,6 @@ class PizzaDeliveryGame(arcade.Window):
         # Game timer (1 minute = 60 seconds)
         self.game_timer = 0.0
         self.game_duration = GAME_DURATION
-        self._is_game_over = False
-
-        # Initialize API client
-        self._initialize_api_client()
-
-    def _initialize_api_client(self):
-        """Initialize the FastAPI client for session logging."""
-        try:
-            self.api_client = FastAPIClient()
-            # Test connection
-            if self.api_client.health_check():
-                self.logger.info("Connected to FastAPI server for session logging")
-            else:
-                self.logger.warning(
-                    "FastAPI server not available - sessions will not be logged"
-                )
-                self.api_client = None
-        except Exception as e:
-            self.logger.warning(f"Failed to initialize API client: {e}")
-            self.api_client = None
-
-    def _create_session(self) -> bool:
-        """Create a new session in the database."""
-        if not self.api_client:
-            return False
-
-        try:
-            session_response = self.api_client.create_session(
-                player_name=self.player_name, earned=self.earned, spent=self.spent
-            )
-            if session_response:
-                self.session_id = session_response.session_id
-                self.logger.info(f"Session created with ID: {self.session_id}")
-                return True
-            else:
-                self.logger.error("Failed to create session")
-                return False
-        except Exception as e:
-            self.logger.error(f"Error creating session: {e}")
-            return False
-
-    def _update_session(self) -> bool:
-        """Update the current session with final scores."""
-        if not self.api_client or not self.session_id:
-            return False
-
-        try:
-            session_response = self.api_client.update_session(
-                session_id=self.session_id, earned=self.earned, spent=self.spent
-            )
-            if session_response:
-                self.logger.info(
-                    f"Session updated: Net Income ${session_response.net_income}"
-                )
-                return True
-            else:
-                self.logger.error("Failed to update session")
-                return False
-        except Exception as e:
-            self.logger.error(f"Error updating session: {e}")
-            return False
-
-    def _cleanup_api_client(self):
-        """Clean up the API client resources."""
-        if self.api_client:
-            try:
-                self.api_client.client.close()
-                self.api_client = None
-            except Exception as e:
-                self.logger.error(f"Error cleaning up API client: {e}")
-
-    def complete_name_input(self):
-        """Complete the name input and show instructions."""
-        self.player_name = (
-            self.name_input_text.strip() if self.name_input_text.strip() else "Player"
-        )
-        self._show_instructions = True
-        self.logger.info(f"Welcome, {self.player_name}! Showing game instructions...")
-
-    def start_game_from_instructions(self):
-        """Start the game after showing instructions."""
-        self._show_instructions = False
-        self._is_game_active = True
-        self._is_game_over = False
-        self.game_timer = 0.0  # Reset timer
-
-        # Create a new session in the database
-        self._create_session()
-
-        # Start the game by generating a new order
-        self.generate_new_order()
-        self.logger.info(f"Let's start delivering pizzas, {self.player_name}!")
-
-    def toggle_instructions_overlay(self):
-        """Toggle the instructions overlay during gameplay."""
-        self._show_instructions_overlay = not self._show_instructions_overlay
-        if self._show_instructions_overlay:
-            # Stop player movement when showing instructions
-            self.player.stop_movement()
-            self.logger.info("Instructions shown - press 'i' again to hide")
-        else:
-            self.logger.info("Instructions hidden")
 
     def get_player_speed_multiplier(self):
         """Get the speed multiplier based on player's current location in speed multiplier locations."""
@@ -196,63 +93,19 @@ class PizzaDeliveryGame(arcade.Window):
         # Note: The player's update() method will automatically recalculate velocity
         # based on the new speed if the player is currently moving
 
-    def end_game(self):
-        """End the game and show final score."""
-        self._is_game_over = True
-
-        # Update the session with final scores
-        self._update_session()
-
-        self.log_final_score()
-
-    def restart_game(self):
-        """Restart the game with the same player name."""
-        # Reset game state
-        self._is_game_over = False
-        self._is_game_active = False
-        self._show_instructions = False
-        self._show_instructions_overlay = False
-        self.score = 0
-        self.earned = 0
-        self.spent = 0
-        self.subway_usage_count = 0
-        self.game_timer = 0.0
-        self.current_order = None
-        self.flash_timer = 0.0
-        self.session_id = None  # Reset session ID for new game
-
-        # Reset player position and state
-        self.player.center_x = MAP_OFFSET_X + MAP_WIDTH // 2
-        self.player.center_y = MAP_OFFSET_Y + MAP_HEIGHT // 2
-        self.player.has_pizza = False
-        self.player.stop_movement()
-
-        # Go directly to showing instructions
-        self._show_instructions = True
-
-        self.logger.info(
-            f"Game restarted for {self.player_name}! Showing instructions..."
-        )
+    def update_score(self):
+        """Update the net income score."""
+        self.score = self.earned - self.spent
 
     def log_final_score(self):
         """Log the final score with player name."""
-        self.logger.info("=== GAME OVER ===")
-        self.logger.info(f"Player: {self.player_name}")
-        self.logger.info(f"Earned: ${self.earned}")
-        self.logger.info(f"Spent: ${self.spent}")
-        self.logger.info(f"Net Income: ${self.score}")
-        self.logger.info(f"Subway Usage: {self.subway_usage_count} times")
-        self.logger.info("================")
-
-    @property
-    def is_game_active(self) -> bool:
-        """Check if the game is active."""
-        return self._is_game_active and not self._is_game_over
-
-    @property
-    def is_game_over(self) -> bool:
-        """Check if the game is over."""
-        return self._is_game_over
+        logger.info("=== GAME OVER ===")
+        logger.info(f"Player: {self.player_name}")
+        logger.info(f"Earned: ${self.earned}")
+        logger.info(f"Spent: ${self.spent}")
+        logger.info(f"Net Income: ${self.score}")
+        logger.info(f"Subway Usage: {self.subway_usage_count} times")
+        logger.info("================")
 
     @property
     def player(self) -> arcade.Sprite:
@@ -282,17 +135,17 @@ class PizzaDeliveryGame(arcade.Window):
     def generate_new_order(self):
         """Generate a new order and make it the current order."""
         self.current_order = Order.generate_order()
-        self.logger.info(
+        logger.info(
             f"New order: Pickup from {self.current_order.pickup_location.name} at {self.current_order.pickup_location.avenue_street_address}, deliver to {self.current_order.delivery_location.avenue_street_address}"
         )
 
-    def get_current_pickup_location(self) -> Location:
-        """Get the current pickup location for highlighting."""
-        return self.current_order.pickup_location
-
-    def get_current_delivery_location(self) -> Location:
-        """Get the current delivery location for highlighting."""
-        return self.current_order.delivery_location
+    def get_current_order_location(self, is_pickup: bool = True) -> Location:
+        """Get the current pickup or delivery location for highlighting."""
+        return (
+            self.current_order.pickup_location
+            if is_pickup
+            else self.current_order.delivery_location
+        )
 
     def draw_order_highlights(self):
         """Draw highlighting for current order pickup and delivery locations."""
@@ -309,39 +162,40 @@ class PizzaDeliveryGame(arcade.Window):
 
             if not self.player.has_pizza:
                 # Player doesn't have pizza - highlight pickup location only
-                pickup_location = self.get_current_pickup_location()
+                location = self.get_current_order_location(is_pickup=True)
                 arcade.draw_rect_outline(
-                    pickup_location.arcade_rect, highlight_color, border_width=4
+                    location.arcade_rect, highlight_color, border_width=8
                 )
             else:
                 # Player has pizza - highlight delivery location only
-                delivery_location = self.get_current_delivery_location()
+                location = self.get_current_order_location(is_pickup=False)
                 arcade.draw_rect_outline(
-                    delivery_location.arcade_rect, highlight_color, border_width=4
+                    location.arcade_rect, highlight_color, border_width=8
                 )
+
+    def _draw_sidebar_background(self):
+        """Draw the sidebar background and border."""
+        sidebar_rect = arcade.LRBT(SIDEBAR_X, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
+        arcade.draw_rect_filled(sidebar_rect, arcade.color.LIGHT_BLUE)
+        arcade.draw_rect_outline(sidebar_rect, arcade.color.BLACK, border_width=2)
+
+    def _draw_sidebar_text(
+        self, text: str, x: int, y: int, color, size: int = 14, bold: bool = False
+    ) -> int:
+        """Draw text in sidebar and return new y position."""
+        arcade.draw_text(text, x, y, color, size, bold=bold)
+        return y - (25 if bold else 20)
 
     def draw_sidebar(self):
         """Draw the sidebar with game information."""
-        # Draw sidebar background
-        sidebar_rect = arcade.LRBT(SIDEBAR_X, SCREEN_WIDTH, 0, SCREEN_HEIGHT)
-        arcade.draw_rect_filled(
-            sidebar_rect,
-            arcade.color.LIGHT_BLUE,
-        )
-
-        # Draw sidebar border
-        arcade.draw_rect_outline(
-            sidebar_rect,
-            arcade.color.BLACK,
-            border_width=2,
-        )
+        self._draw_sidebar_background()
 
         # Sidebar text positioning
         sidebar_text_x = SIDEBAR_X + 10
         current_y = SCREEN_HEIGHT - 30
 
-        # Draw player name
-        arcade.draw_text(
+        # Draw player and financial information
+        current_y = self._draw_sidebar_text(
             f"Player: {self.player_name}",
             sidebar_text_x,
             current_y,
@@ -349,44 +203,29 @@ class PizzaDeliveryGame(arcade.Window):
             14,
             bold=True,
         )
-        current_y -= 25
-
-        # Draw financial information
-        arcade.draw_text(
-            f"Earned: ${self.earned} ",
-            sidebar_text_x,
-            current_y,
-            arcade.color.GREEN,
-            14,
+        current_y = self._draw_sidebar_text(
+            f"Earned: ${self.earned}", sidebar_text_x, current_y, arcade.color.GREEN
         )
-        current_y -= 20
-
-        arcade.draw_text(
-            f"Spent: ${self.spent} ",
-            sidebar_text_x,
-            current_y,
-            arcade.color.RED,
-            14,
+        current_y = self._draw_sidebar_text(
+            f"Spent: ${self.spent}", sidebar_text_x, current_y, arcade.color.RED
         )
-        current_y -= 20
-
-        arcade.draw_text(
-            f"Net Income: ${self.score} ",
+        current_y = self._draw_sidebar_text(
+            f"Net Income: ${self.score}",
             sidebar_text_x,
             current_y,
             arcade.color.BLUE,
             16,
             bold=True,
         )
-        current_y -= 30
+        current_y -= 5  # Extra spacing
 
         # Draw timer
         remaining_time = max(0, self.game_duration - self.game_timer)
         timer_color = arcade.color.RED if remaining_time < 10 else arcade.color.BLACK
-        arcade.draw_text(
+        current_y = self._draw_sidebar_text(
             f"Time: {remaining_time:.1f}s", sidebar_text_x, current_y, timer_color, 16
         )
-        current_y -= 30
+        current_y -= 5  # Extra spacing
 
         # Draw current order information
         if self.current_order is not None:
@@ -396,45 +235,22 @@ class PizzaDeliveryGame(arcade.Window):
 
         # Draw controls
         current_y = MAP_OFFSET_Y
-        arcade.draw_text(
+        current_y = self._draw_sidebar_text(
             "Controls:", sidebar_text_x, current_y, arcade.color.BLACK, 12, bold=True
         )
-        current_y -= 20
 
-        arcade.draw_text(
+        control_texts = [
             "WASD/Arrow Keys to move",
-            sidebar_text_x,
-            current_y,
-            arcade.color.BLACK,
-            10,
-        )
-        current_y -= 15
-
-        arcade.draw_text(
             "SPACE to pickup/deliver",
-            sidebar_text_x,
-            current_y,
-            arcade.color.BLACK,
-            10,
-        )
-        current_y -= 15
-
-        arcade.draw_text(
             "SPACE at subway to teleport",
-            sidebar_text_x,
-            current_y,
-            arcade.color.BLACK,
-            10,
-        )
-        current_y -= 15
-
-        arcade.draw_text(
             "I to show/hide instructions",
-            sidebar_text_x,
-            current_y,
-            arcade.color.BLACK,
-            10,
-        )
+        ]
+
+        for text in control_texts:
+            current_y = self._draw_sidebar_text(
+                text, sidebar_text_x, current_y, arcade.color.BLACK, 10
+            )
+            current_y += 5  # Less spacing for controls
 
     def on_draw(self):
         """Render the screen."""
@@ -443,22 +259,14 @@ class PizzaDeliveryGame(arcade.Window):
         # Always draw the game screen first
         self.draw_game_screen()
 
-        # If game is not active, draw the name input dialog on top
-        if (
-            not self.is_game_active
-            and not self.is_game_over
-            and not self._show_instructions
-        ):
+        # Draw state-specific overlays
+        if self.game_state_manager.game_state == GameState.NAME_INPUT:
             draw_name_input_dialog(self.name_input_text)
-        # If showing instructions, draw the instructions dialog
-        elif self._show_instructions:
+        elif self.game_state_manager.game_state == GameState.SHOWING_INSTRUCTIONS:
             draw_game_instructions_dialog()
-        # If game is over, draw the final score screen
-        elif self.is_game_over:
+        elif self.game_state_manager.game_state == GameState.GAME_OVER:
             draw_final_score(self.player_name, self.earned, self.spent, self.score)
-
-        # If showing instructions overlay during active gameplay, draw it on top
-        if self._show_instructions_overlay and self.is_game_active:
+        elif self.game_state_manager.game_state == GameState.ACTIVE_WITH_OVERLAY:
             draw_game_instructions_dialog(is_overlay=True)
 
     def draw_game_screen(self):
@@ -496,22 +304,20 @@ class PizzaDeliveryGame(arcade.Window):
 
     def on_update(self, delta_time):
         """Movement and game logic."""
-        if self.is_game_active:
-            # Only update game logic if instructions overlay is not shown
-            if not self._show_instructions_overlay:
-                # Update player speed based on speed multiplier locations
-                self.update_player_speed()
+        if self.game_state_manager.game_state == GameState.ACTIVE:
+            # Update player speed based on speed multiplier locations
+            self.update_player_speed()
 
-                self.player.update(delta_time)
-                # Update flash timer for highlighting effects
-                self.flash_timer += delta_time
+            self.player.update(delta_time)
+            # Update flash timer for highlighting effects
+            self.flash_timer += delta_time
 
-                # Update game timer
-                self.game_timer += delta_time
+            # Update game timer
+            self.game_timer += delta_time
 
-                # Check if time is up
-                if self.game_timer >= self.game_duration:
-                    self.end_game()
+            # Check if time is up
+            if self.game_timer >= self.game_duration:
+                self.game_state_manager.end_game()
 
     def handle_space_action(self):
         """Handle space bar action for pizza pickup, dropoff, and subway teleportation."""
@@ -519,33 +325,31 @@ class PizzaDeliveryGame(arcade.Window):
         # Check for pizza pickup using distance-based collision detection
         if not self.player.has_pizza:
             # Only allow pickup from the current order's pickup location
-            pickup_location = self.get_current_pickup_location()
-            distance = arcade.get_distance_between_sprites(self.player, pickup_location)
+            location = self.get_current_order_location(is_pickup=True)
+            distance = arcade.get_distance_between_sprites(self.player, location)
             if distance < COLLISION_THRESHOLD:
                 self.player.has_pizza = True
-                self.logger.info(f"Pizza picked up from {pickup_location.name}!")
+                logger.info(f"Pizza picked up from {location.name}!")
                 return
 
         # Check for pizza delivery using distance-based collision detection
         elif self.player.has_pizza:
             # Only allow delivery to the current order's delivery location
-            delivery_location = self.get_current_delivery_location()
-            distance = arcade.get_distance_between_sprites(
-                self.player, delivery_location
-            )
+            location = self.get_current_order_location(is_pickup=False)
+            distance = arcade.get_distance_between_sprites(self.player, location)
             if distance < COLLISION_THRESHOLD:
                 self.player.has_pizza = False
                 self.earned += 10  # +$10 per pizza delivery
-                self.score = self.earned - self.spent  # Update net income
-                self.logger.info(
-                    f"Pizza delivered to {delivery_location.avenue_street_address}! Earned: ${self.earned}, Net: ${self.score}"
+                self.update_score()
+                logger.info(
+                    f"Pizza delivered to {location.avenue_street_address}! Earned: ${self.earned}, Net: ${self.score}"
                 )
                 # Complete the current order and immediately generate a new one
                 self.current_order = None
                 self.generate_new_order()
                 return
 
-        # Check for subway interaction first (available at any time)
+        # Check for subway interaction at last
         for subway in self.subways:
             distance = arcade.get_distance_between_sprites(self.player, subway)
             if distance < COLLISION_THRESHOLD:
@@ -571,14 +375,13 @@ class PizzaDeliveryGame(arcade.Window):
     def handle_subway_teleportation(self):
         """Handle subway teleportation to the closest subway near the destination."""
         if self.current_order is None:
-            self.logger.warning(
+            logger.warning(
                 "No active order - can't determine destination for subway teleportation!"
             )
             return
-        if self.player.has_pizza:
-            destination = self.get_current_delivery_location()
-        else:
-            destination = self.get_current_pickup_location()
+        destination = self.get_current_order_location(
+            is_pickup=not self.player.has_pizza
+        )
         closest_subway = self.find_closest_subway_to_destination(destination)
 
         # Teleport player to the closest subway near the destination
@@ -587,78 +390,83 @@ class PizzaDeliveryGame(arcade.Window):
 
         # Deduct $1 for subway usage
         self.spent += 1
-        self.score = self.earned - self.spent  # Update net income
+        self.update_score()
         self.subway_usage_count += 1
 
-        self.logger.info(
+        logger.info(
             f"Teleported to subway at {closest_subway.avenue_street_address} (closest to destination)! Spent: ${self.spent}, Net: ${self.score}"
         )
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
-        if self.is_game_over:
-            self._handle_game_over_keys(key)
-        elif not self.is_game_active:
-            self._handle_menu_keys(key)
-        else:
-            self._handle_game_keys(key)
-
-    def _handle_game_over_keys(self, key):
-        """Handle keys when game is over."""
+        # Common keys that work in all states
         if key == arcade.key.ESCAPE:
-            self._cleanup_api_client()
+            self.session_manager.cleanup()
             arcade.close_window()
-        elif key == arcade.key.R:
-            self.restart_game()
+            return
 
-    def _handle_menu_keys(self, key):
-        """Handle keys in menu states."""
-        if self._show_instructions:
-            if key == arcade.key.ENTER:
-                self.start_game_from_instructions()
-            elif key == arcade.key.ESCAPE:
-                self._cleanup_api_client()
-                arcade.close_window()
+        # State-specific key handling
+        if self.game_state_manager.is_game_over:
+            self._handle_game_over_key(key)
+        elif not self.game_state_manager.is_game_active:
+            self._handle_menu_key(key)
         else:
+            self._handle_game_key(key)
+
+    def _handle_game_over_key(self, key):
+        """Handle keys when game is over."""
+        if key == arcade.key.R:
+            self.game_state_manager.restart_game()
+
+    def _handle_menu_key(self, key):
+        """Handle keys in menu states."""
+        if self.game_state_manager.game_state == GameState.SHOWING_INSTRUCTIONS:
             if key == arcade.key.ENTER:
-                self.complete_name_input()
+                self.game_state_manager.start_game_from_instructions()
+        elif self.game_state_manager.game_state == GameState.NAME_INPUT:
+            if key == arcade.key.ENTER:
+                self.game_state_manager.complete_name_input()
             elif key == arcade.key.BACKSPACE:
                 if self.name_input_text:
                     self.name_input_text = self.name_input_text[:-1]
-            elif key == arcade.key.ESCAPE:
-                self._cleanup_api_client()
-                arcade.close_window()
             else:
                 # Add character to input text (only letters, numbers, and spaces)
                 char = chr(key) if 32 <= key <= 126 else ""
                 if char and len(self.name_input_text) < 20:  # Limit name length
                     self.name_input_text += char
 
-    def _handle_game_keys(self, key):
+    def _handle_game_key(self, key):
         """Handle keys during active gameplay."""
         if key == arcade.key.I:
-            self.toggle_instructions_overlay()
+            self.game_state_manager.toggle_instructions_overlay()
         elif key == arcade.key.ESCAPE:
             self.log_final_score()
-            self._cleanup_api_client()
-            arcade.close_window()
-        # Only allow movement and actions if instructions overlay is not shown
-        elif not self._show_instructions_overlay:
-            if key == arcade.key.UP or key == arcade.key.W:
-                self.player.move_direction("up")
-            elif key == arcade.key.DOWN or key == arcade.key.S:
-                self.player.move_direction("down")
-            elif key == arcade.key.LEFT or key == arcade.key.A:
-                self.player.move_direction("left")
-            elif key == arcade.key.RIGHT or key == arcade.key.D:
-                self.player.move_direction("right")
-            elif key == arcade.key.SPACE:
-                self.handle_space_action()
+        # Only allow movement and actions if not showing instructions overlay
+        elif self.game_state_manager.game_state == GameState.ACTIVE:
+            self._handle_movement_key(key)
+
+    def _handle_movement_key(self, key):
+        """Handle movement and action keys."""
+        movement_map = {
+            arcade.key.UP: "up",
+            arcade.key.W: "up",
+            arcade.key.DOWN: "down",
+            arcade.key.S: "down",
+            arcade.key.LEFT: "left",
+            arcade.key.A: "left",
+            arcade.key.RIGHT: "right",
+            arcade.key.D: "right",
+        }
+
+        if key in movement_map:
+            self.player.move_direction(movement_map[key])
+        elif key == arcade.key.SPACE:
+            self.handle_space_action()
 
     def on_key_release(self, key, modifiers):
         """Called when the user releases a key."""
-        # Stop movement when key is released (only during game, not name input, and not when instructions are shown)
-        if self.is_game_active and not self._show_instructions_overlay:
+        # Stop movement when key is released (only during active gameplay)
+        if self.game_state_manager.game_state == GameState.ACTIVE:
             movement_keys = [
                 arcade.key.UP,
                 arcade.key.W,

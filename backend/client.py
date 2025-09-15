@@ -40,6 +40,24 @@ class FastAPIClient:
         except httpx.RequestError:
             return False
 
+    def _make_request(
+        self,
+        method: str,
+        endpoint: str,
+        operation_name: str,
+        json_data: Optional[dict] = None,
+    ) -> Optional[dict]:
+        """Make an HTTP request with common error handling."""
+        try:
+            response = self.client.request(
+                method, f"{self.base_url}{endpoint}", json=json_data
+            )
+            response.raise_for_status()
+            return response.json()
+        except (httpx.RequestError, httpx.HTTPStatusError) as e:
+            self.logger.error(f"Failed to {operation_name}: {e}")
+            return None
+
     def create_session(
         self, player_name: str, earned: float = 0.0, spent: float = 0.0
     ) -> Optional[Session]:
@@ -53,15 +71,10 @@ class FastAPIClient:
             net_income=earned - spent,
         )
 
-        try:
-            response = self.client.post(
-                f"{self.base_url}/sessions/", json=session_data.dict()
-            )
-            response.raise_for_status()
-            return Session(**response.json())
-        except (httpx.RequestError, httpx.HTTPStatusError) as e:
-            self.logger.error(f"Failed to create session: {e}")
-            return None
+        response_data = self._make_request(
+            "POST", "/sessions/", "create session", session_data.dict()
+        )
+        return Session(**response_data) if response_data else None
 
     def update_session(
         self, session_id: str, earned: float, spent: float
@@ -71,33 +84,26 @@ class FastAPIClient:
             earned=earned, spent=spent, net_income=earned - spent
         )
 
-        try:
-            response = self.client.put(
-                f"{self.base_url}/sessions/{session_id}",
-                json=session_update.dict(exclude_unset=True),
-            )
-            response.raise_for_status()
-            return Session(**response.json())
-        except (httpx.RequestError, httpx.HTTPStatusError) as e:
-            self.logger.error(f"Failed to update session: {e}")
-            return None
+        response_data = self._make_request(
+            "PUT",
+            f"/sessions/{session_id}",
+            "update session",
+            session_update.dict(exclude_unset=True),
+        )
+        return Session(**response_data) if response_data else None
 
     def get_session(self, session_id: str) -> Optional[Session]:
         """Get a session by session ID."""
-        try:
-            response = self.client.get(f"{self.base_url}/sessions/{session_id}")
-            response.raise_for_status()
-            return Session(**response.json())
-        except (httpx.RequestError, httpx.HTTPStatusError) as e:
-            self.logger.error(f"Failed to get session: {e}")
-            return None
+        response_data = self._make_request(
+            "GET", f"/sessions/{session_id}", "get session"
+        )
+        return Session(**response_data) if response_data else None
 
     def get_sessions_by_player(self, player_name: str) -> list[Session]:
         """Get all sessions for a specific player."""
-        try:
-            response = self.client.get(f"{self.base_url}/sessions/player/{player_name}")
-            response.raise_for_status()
-            return [Session(**session) for session in response.json()]
-        except (httpx.RequestError, httpx.HTTPStatusError) as e:
-            self.logger.error(f"Failed to get sessions for player: {e}")
-            return []
+        response_data = self._make_request(
+            "GET", f"/sessions/player/{player_name}", "get sessions for player"
+        )
+        return (
+            [Session(**session) for session in response_data] if response_data else []
+        )

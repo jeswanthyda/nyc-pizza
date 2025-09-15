@@ -5,7 +5,7 @@ Script to run the FastAPI server
 
 import uvicorn
 
-from backend.logging_utils import get_logger
+from logging_utils import get_logger
 
 # Initialize logging
 logger = get_logger(__name__)

@@ -1,22 +1,28 @@
 import os
 import sqlite3
+from contextlib import contextmanager
 from typing import Generator
 
 # SQLite database path - use absolute path to avoid issues when running from different directories
 DATABASE_PATH = os.path.join(os.path.dirname(__file__), "nyc_pizza.db")
 
 
-def get_db_connection() -> sqlite3.Connection:
+@contextmanager
+def get_db_connection() -> Generator[sqlite3.Connection, None, None]:
     """Get a database connection"""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DATABASE_PATH, check_same_thread=False, timeout=30.0)
     conn.row_factory = sqlite3.Row  # This allows accessing columns by name
-    return conn
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 
 def get_db_dependency() -> Generator[sqlite3.Connection, None, None]:
-    """FastAPI dependency that provides a database connection with automatic cleanup"""
-    conn = get_db_connection()
-    try:
+    """FastAPI dependency that provides a fresh database connection per request."""
+    with get_db_connection() as conn:
         yield conn
-    finally:
-        conn.close()

@@ -3,10 +3,10 @@ from typing import List
 
 from backend.db.connection import get_db_dependency
 from backend.db.models import Session
-from backend.logging_utils import get_logger
 from backend.server.schemas import SessionCreate, SessionUpdate
 from backend.server.sessions_handler import SessionsHandler
 from fastapi import Depends, FastAPI, HTTPException, status
+from logging_utils import get_logger
 
 logger = get_logger(__name__)
 
