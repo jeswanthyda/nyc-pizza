@@ -1,3 +1,6 @@
+"""NYC Pizza Delivery Game - Score Tracker Module."""
+
+
 class ScoreTracker:
     """Tracks game score, earnings, spending, and subway usage."""
 

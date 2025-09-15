@@ -6,11 +6,11 @@ from constants import (
     MAP_OFFSET_Y,
     MAP_WIDTH,
 )
-from logging_utils import get_logger
 
 # Import ScoreTracker from main module
-from score_tracker import ScoreTracker
-from session_manager import SessionManager
+from gameplay.score_tracker import ScoreTracker
+from gameplay.session_manager import SessionManager
+from logging_utils import get_logger
 
 # Initialize logger at module level
 logger = get_logger(__name__)
