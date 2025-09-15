@@ -25,7 +25,6 @@ class GameState(Enum):
     ACTIVE_WITH_OVERLAY = "active_with_overlay"
     SHOWING_LEADERBOARD = "showing_leaderboard"
     GAME_OVER = "game_over"
-    GAME_OVER_WITH_LEADERBOARD = "game_over_with_leaderboard"
 
 
 class GameStateManager:
@@ -151,29 +150,6 @@ class GameStateManager:
     def hide_leaderboard(self):
         """Hide the leaderboard and return to previous state."""
         if self._game_state == GameState.SHOWING_LEADERBOARD:
-            # Return to active game state
-            self._game_state = GameState.ACTIVE
-            logger.info("Leaderboard hidden")
-        elif self._game_state == GameState.GAME_OVER_WITH_LEADERBOARD:
-            # Return to game over state
+            # Return to game over state (since leaderboard is only shown from game over now)
             self._game_state = GameState.GAME_OVER
-            logger.info("Leaderboard hidden from game over screen")
-
-    def show_leaderboard_in_game_over(self):
-        """Show the leaderboard in the game over screen."""
-        if self.session_manager.api_client:
-            try:
-                self.leaderboard_data = self.session_manager.api_client.get_leaderboard(
-                    limit=10
-                )
-                self._game_state = GameState.GAME_OVER_WITH_LEADERBOARD
-                logger.info("Showing leaderboard in game over screen")
-            except Exception as e:
-                logger.error(f"Failed to load leaderboard: {e}")
-                # Show empty leaderboard if API fails
-                self.leaderboard_data = []
-                self._game_state = GameState.GAME_OVER_WITH_LEADERBOARD
-        else:
-            logger.warning("API client not available - showing empty leaderboard")
-            self.leaderboard_data = []
-            self._game_state = GameState.GAME_OVER_WITH_LEADERBOARD
+            logger.info("Leaderboard hidden")
