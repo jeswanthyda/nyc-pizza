@@ -55,12 +55,10 @@ The NYC Pizza game consists of two components that need to be running:
 
 ### Architecture Overview 
 
-- **Frontend**: Arcade-based game client handling all real-time gameplay
-- **Backend**: FastAPI server managing sessions, scores, and leaderboards  
+- **Frontend**: Arcade package to build 2D ui/ux in python.
+- **Backend**: FastAPI server sitting infrom of database to managing sessions, scores, and leaderboards  
 - **Database**: SQLite for lightweight, persistent storage
-- **Communication**: RESTful API between client and server
-
-This separation allows the game to be scalable and maintainable."
+- **Communication**: RESTful API between FE and BE.
 
 ### UX/UI Design Decisions
 
