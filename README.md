@@ -4,35 +4,6 @@ You play as a pizza delivery driver racing against the clock to pick up pizzas f
 
 Your mission? Deliver as many pizzas as possible in **1min**.
 
-
-## 🎮 Gameplay
-
-* Each game session lasts **1min**.
-* Orders appear with:
-  * A **pickup location** (pizza shop).
-  * A **delivery location** (home).
-* Drive along NYC’s streets and avenues to complete the delivery.
-* Each successful delivery increases your score by **+$10 USD**.
-* Each subway use costs you **-$1 USD**.
-* At the end of the session, your **total USD score is stored in database**.
-
-**Objective:** Deliver as many pizzas as possible before time runs out.
-
-## 🎹 Controls
-
-* **Arrow Keys / WASD** → Move delivery driver
-* **Space** → Pick up / Drop pizza / teleport at subway to a nearest subway to destination
-* **Esc** → Quit game
-
-
-
-## 🗺 Features
-
-* **NYC Map Grid** – Pizza shops, homes, streets and avenues.
-* **1min Sessions** – Short, replayable gameplay loops.
-* **USD Scoring System** – +$10 USD per successful delivery, -$1 USD per subway use.
-* **Local Score Logging** – Saves your final USD score at the end of each session.
-
 ## 🚀 How to Run
 
 ### Prerequisites
@@ -80,16 +51,34 @@ The NYC Pizza game consists of two components that need to be running:
 - **Import errors**: Ensure all dependencies are installed with `make install`
 - **Python version**: Make sure you're using Python 3.13 or higher
 
-
-
 ## 🛠 Tech Stack
 
-- **Arcade** - For 2D game development in python.
-- **FastAPI** - Application layer sitting infront of database for db operations during game.
-- **SQLite** - Lightweight, serverless database engine for persistent storage of game sessions and scores.
-- **Pydantic** - Data validation and settings management using Python type annotations.
-- **uv** - Fast Python package and project manager for dependency management and virtual environments.
+### Architecture Overview 
 
+- **Frontend**: Arcade-based game client handling all real-time gameplay
+- **Backend**: FastAPI server managing sessions, scores, and leaderboards  
+- **Database**: SQLite for lightweight, persistent storage
+- **Communication**: RESTful API between client and server
+
+This separation allows the game to be scalable and maintainable."
+
+### UX/UI Design Decisions
+
+- **1-minute gameplay loops** - Perfect for quick sessions and high replayability
+- **Real-time visual feedback** - Flashing highlights show current pickup/delivery locations
+- **Intuitive controls** - WASD/Arrow keys for movement, Space for actions
+- **Clear scoring system** - +$10 per delivery, -$1 per subway use, with real-time sidebar updates
+- **Manhattan grid layout** - Authentic NYC street system with numbered avenues and streets"
+
+### Backend Design (30 seconds)
+
+- **FastAPI** for high-performance async API endpoints
+- **Pydantic models** for data validation and serialization
+- **SQLite** with proper migrations for session storage
+- **RESTful endpoints** for CRUD operations on game sessions
+- **Leaderboard functionality** with top scores and player-specific best scores
+
+The API supports session creation, updates, leaderboards, and player statistics.
 
 
 #### 📁 Project Structure
@@ -140,4 +129,32 @@ nyc-pizza/
 ├── run_game.py              # Game client entry point
 └── pyproject.toml           # Python project configuration
 ```
+
+## 🎮 Gameplay
+
+* Each game session lasts **1min**.
+* Orders appear with:
+  * A **pickup location** (pizza shop).
+  * A **delivery location** (home).
+* Drive along NYC’s streets and avenues to complete the delivery.
+* Each successful delivery increases your score by **+$10 USD**.
+* Each subway use costs you **-$1 USD**.
+* At the end of the session, your **total USD score is stored in database**.
+
+**Objective:** Deliver as many pizzas as possible before time runs out.
+
+## 🎹 Controls
+
+* **Arrow Keys / WASD** → Move delivery driver
+* **Space** → Pick up / Drop pizza / teleport at subway to a nearest subway to destination
+* **Esc** → Quit game
+
+
+
+## 🗺 Features
+
+* **NYC Map Grid** – Pizza shops, homes, streets and avenues.
+* **1min Sessions** – Short, replayable gameplay loops.
+* **USD Scoring System** – +$10 USD per successful delivery, -$1 USD per subway use.
+* **Local Score Logging** – Saves your final USD score at the end of each session.
 
