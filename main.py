@@ -33,10 +33,38 @@ from map_locations import (
     SUBWAYS,
     Location,
 )
-from session_manager import SessionManager
 
 # Initialize logger at module level
 logger = get_logger(__name__)
+
+
+class ScoreTracker:
+    """Tracks game score, earnings, spending, and subway usage."""
+
+    def __init__(self):
+        self.score = 0  # Net income (earned - spent)
+        self.earned = 0  # Money earned from pizza deliveries
+        self.spent = 0  # Money spent on subway usage
+        self.subway_usage_count = 0  # Track subway usage for cost calculation
+
+    def update_score(self):
+        """Update the net income score."""
+        self.score = self.earned - self.spent
+
+    def earn_money(self, amount: int):
+        """Add money to earned amount and update score."""
+        self.earned += amount
+        self.update_score()
+
+    def spend_money(self, amount: int):
+        """Add money to spent amount and update score."""
+        self.spent += amount
+        self.update_score()
+
+    def use_subway(self):
+        """Record subway usage and spend $1."""
+        self.subway_usage_count += 1
+        self.spend_money(1)
 
 
 class PizzaDeliveryGame(arcade.Window):
@@ -46,18 +74,10 @@ class PizzaDeliveryGame(arcade.Window):
         super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
         arcade.set_background_color(arcade.color.LIGHT_GRAY)
 
-        # Game objects
-        self.score = 0  # Net income (earned - spent)
-        self.earned = 0  # Money earned from pizza deliveries
-        self.spent = 0  # Money spent on subway usage
-        self.subway_usage_count = 0  # Track subway usage for cost calculation
-        self.player_name = ""
-        self.name_input_text = ""
+        # Initialize score tracker
+        self.score_tracker = ScoreTracker()
 
-        # Initialize session manager
-        self.session_manager = SessionManager()
-
-        # Initialize game state transitions
+        # Initialize game state manager
         self.game_state_manager = GameStateManager(self)
 
         # Initialize game objects
@@ -93,18 +113,14 @@ class PizzaDeliveryGame(arcade.Window):
         # Note: The player's update() method will automatically recalculate velocity
         # based on the new speed if the player is currently moving
 
-    def update_score(self):
-        """Update the net income score."""
-        self.score = self.earned - self.spent
-
     def log_final_score(self):
         """Log the final score with player name."""
         logger.info("=== GAME OVER ===")
-        logger.info(f"Player: {self.player_name}")
-        logger.info(f"Earned: ${self.earned}")
-        logger.info(f"Spent: ${self.spent}")
-        logger.info(f"Net Income: ${self.score}")
-        logger.info(f"Subway Usage: {self.subway_usage_count} times")
+        logger.info(f"Player: {self.game_state_manager.player_name}")
+        logger.info(f"Earned: ${self.score_tracker.earned}")
+        logger.info(f"Spent: ${self.score_tracker.spent}")
+        logger.info(f"Net Income: ${self.score_tracker.score}")
+        logger.info(f"Subway Usage: {self.score_tracker.subway_usage_count} times")
         logger.info("================")
 
     @property
@@ -196,7 +212,7 @@ class PizzaDeliveryGame(arcade.Window):
 
         # Draw player and financial information
         current_y = self._draw_sidebar_text(
-            f"Player: {self.player_name}",
+            f"Player: {self.game_state_manager.player_name}",
             sidebar_text_x,
             current_y,
             arcade.color.BLACK,
@@ -204,13 +220,19 @@ class PizzaDeliveryGame(arcade.Window):
             bold=True,
         )
         current_y = self._draw_sidebar_text(
-            f"Earned: ${self.earned}", sidebar_text_x, current_y, arcade.color.GREEN
+            f"Earned: ${self.score_tracker.earned}",
+            sidebar_text_x,
+            current_y,
+            arcade.color.GREEN,
         )
         current_y = self._draw_sidebar_text(
-            f"Spent: ${self.spent}", sidebar_text_x, current_y, arcade.color.RED
+            f"Spent: ${self.score_tracker.spent}",
+            sidebar_text_x,
+            current_y,
+            arcade.color.RED,
         )
         current_y = self._draw_sidebar_text(
-            f"Net Income: ${self.score}",
+            f"Net Income: ${self.score_tracker.score}",
             sidebar_text_x,
             current_y,
             arcade.color.BLUE,
@@ -261,11 +283,16 @@ class PizzaDeliveryGame(arcade.Window):
 
         # Draw state-specific overlays
         if self.game_state_manager.game_state == GameState.NAME_INPUT:
-            draw_name_input_dialog(self.name_input_text)
+            draw_name_input_dialog(self.game_state_manager.name_input_text)
         elif self.game_state_manager.game_state == GameState.SHOWING_INSTRUCTIONS:
             draw_game_instructions_dialog()
         elif self.game_state_manager.game_state == GameState.GAME_OVER:
-            draw_final_score(self.player_name, self.earned, self.spent, self.score)
+            draw_final_score(
+                self.game_state_manager.player_name,
+                self.score_tracker.earned,
+                self.score_tracker.spent,
+                self.score_tracker.score,
+            )
         elif self.game_state_manager.game_state == GameState.ACTIVE_WITH_OVERLAY:
             draw_game_instructions_dialog(is_overlay=True)
 
@@ -339,10 +366,9 @@ class PizzaDeliveryGame(arcade.Window):
             distance = arcade.get_distance_between_sprites(self.player, location)
             if distance < COLLISION_THRESHOLD:
                 self.player.has_pizza = False
-                self.earned += 10  # +$10 per pizza delivery
-                self.update_score()
+                self.score_tracker.earn_money(10)  # +$10 per pizza delivery
                 logger.info(
-                    f"Pizza delivered to {location.avenue_street_address}! Earned: ${self.earned}, Net: ${self.score}"
+                    f"Pizza delivered to {location.avenue_street_address}! Earned: ${self.score_tracker.earned}, Net: ${self.score_tracker.score}"
                 )
                 # Complete the current order and immediately generate a new one
                 self.current_order = None
@@ -389,19 +415,17 @@ class PizzaDeliveryGame(arcade.Window):
         self.player.center_y = closest_subway.center_y
 
         # Deduct $1 for subway usage
-        self.spent += 1
-        self.update_score()
-        self.subway_usage_count += 1
+        self.score_tracker.use_subway()
 
         logger.info(
-            f"Teleported to subway at {closest_subway.avenue_street_address} (closest to destination)! Spent: ${self.spent}, Net: ${self.score}"
+            f"Teleported to subway at {closest_subway.avenue_street_address} (closest to destination)! Spent: ${self.score_tracker.spent}, Net: ${self.score_tracker.score}"
         )
 
     def on_key_press(self, key, modifiers):
         """Called whenever a key is pressed."""
         # Common keys that work in all states
         if key == arcade.key.ESCAPE:
-            self.session_manager.cleanup()
+            self.game_state_manager.session_manager.cleanup()
             arcade.close_window()
             return
 
@@ -427,13 +451,17 @@ class PizzaDeliveryGame(arcade.Window):
             if key == arcade.key.ENTER:
                 self.game_state_manager.complete_name_input()
             elif key == arcade.key.BACKSPACE:
-                if self.name_input_text:
-                    self.name_input_text = self.name_input_text[:-1]
+                if self.game_state_manager.name_input_text:
+                    self.game_state_manager.name_input_text = (
+                        self.game_state_manager.name_input_text[:-1]
+                    )
             else:
                 # Add character to input text (only letters, numbers, and spaces)
                 char = chr(key) if 32 <= key <= 126 else ""
-                if char and len(self.name_input_text) < 20:  # Limit name length
-                    self.name_input_text += char
+                if (
+                    char and len(self.game_state_manager.name_input_text) < 20
+                ):  # Limit name length
+                    self.game_state_manager.name_input_text += char
 
     def _handle_game_key(self, key):
         """Handle keys during active gameplay."""
