@@ -25,4 +25,4 @@ run_backend_server:
 
 # Run the NYC Pizza game (requires backend to be running)
 run_game:
-	uv run python main.py
+	uv run python run_game.py
