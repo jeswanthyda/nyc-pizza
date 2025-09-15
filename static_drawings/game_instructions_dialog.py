@@ -74,7 +74,6 @@ def draw_game_instructions_dialog(is_overlay=False):
         "• SPACE: Pick up pizza or deliver it",
         "• SPACE at subway: Teleport to closest subway to your destination",
         "• I: Show/hide instructions during game",
-        "• L: Show leaderboard during game",
         "",
         "TIPS:",
         "• Your destination is highlighted in MAGENTA for easier navigation",
@@ -82,7 +81,6 @@ def draw_game_instructions_dialog(is_overlay=False):
         "• Movement is faster in CentralPark 🏃",
         "• Movement is slower in TimesSquare 🐢",
         "• Watch the timer - when it hits 0, the game ends!",
-        "• Complete as many deliveries as possible to earn more USD!",
     ]
 
     # Draw instructions text
@@ -118,7 +116,7 @@ def draw_game_instructions_dialog(is_overlay=False):
 
     # Draw start instruction
     if is_overlay:
-        instruction_text = "Press 'i' to hide instructions | Press 'l' for leaderboard"
+        instruction_text = "Press 'i' to hide instructions"
     else:
         instruction_text = "Press ENTER to start the game!"
 

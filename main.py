@@ -458,8 +458,6 @@ class PizzaDeliveryGame(arcade.Window):
         """Handle keys during active gameplay."""
         if key == arcade.key.I:
             self.game_state_manager.toggle_instructions_overlay()
-        elif key == arcade.key.L:
-            self.game_state_manager.show_leaderboard()
         elif key == arcade.key.ESCAPE:
             self.log_final_score()
         # Only allow movement and actions if not showing instructions overlay
