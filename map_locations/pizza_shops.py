@@ -19,4 +19,7 @@ PIZZA_SHOPS = [
     PizzaShop(
         Address(11, 120, "Joe's"), arcade.load_texture("images/pizza_shops/joes.png")
     ),
+    PizzaShop(
+        Address(1, 18, "Papa J's"), arcade.load_texture("images/pizza_shops/papajs.png")
+    ),
 ]
