@@ -16,12 +16,6 @@ from constants import (
     SCREEN_WIDTH,
     SIDEBAR_X,
 )
-from drawings import (
-    draw_final_score,
-    draw_game_instructions_dialog,
-    draw_manhattan_grid,
-    draw_name_input_dialog,
-)
 from game_state_manager import GameState, GameStateManager
 from gameplay_sprites.orders import Order
 from gameplay_sprites.player import PlayerCharacter
@@ -33,38 +27,16 @@ from map_locations import (
     SUBWAYS,
     Location,
 )
+from score_tracker import ScoreTracker
+from static_drawings import (
+    draw_final_score,
+    draw_game_instructions_dialog,
+    draw_manhattan_grid,
+    draw_name_input_dialog,
+)
 
 # Initialize logger at module level
 logger = get_logger(__name__)
-
-
-class ScoreTracker:
-    """Tracks game score, earnings, spending, and subway usage."""
-
-    def __init__(self):
-        self.score = 0  # Net income (earned - spent)
-        self.earned = 0  # Money earned from pizza deliveries
-        self.spent = 0  # Money spent on subway usage
-        self.subway_usage_count = 0  # Track subway usage for cost calculation
-
-    def update_score(self):
-        """Update the net income score."""
-        self.score = self.earned - self.spent
-
-    def earn_money(self, amount: int):
-        """Add money to earned amount and update score."""
-        self.earned += amount
-        self.update_score()
-
-    def spend_money(self, amount: int):
-        """Add money to spent amount and update score."""
-        self.spent += amount
-        self.update_score()
-
-    def use_subway(self):
-        """Record subway usage and spend $1."""
-        self.subway_usage_count += 1
-        self.spend_money(1)
 
 
 class PizzaDeliveryGame(arcade.Window):
@@ -95,38 +67,15 @@ class PizzaDeliveryGame(arcade.Window):
         self.game_timer = 0.0
         self.game_duration = GAME_DURATION
 
-    def get_player_speed_multiplier(self):
-        """Get the speed multiplier based on player's current location in speed multiplier locations."""
-        for location in self._speed_multipler_locations:
-            # Check if player sprite collides with location sprite
-            if arcade.check_for_collision(self.player, location):
-                return location.player_speed_multiplier
-
-        # Default multiplier if not in any speed multiplier location
-        return 1.0
-
-    def update_player_speed(self):
-        """Update player speed based on current location."""
-        multiplier = self.get_player_speed_multiplier()
-        new_speed = DEFAULT_PLAYER_SPEED * multiplier
-        self.player.set_speed(new_speed)
-        # Note: The player's update() method will automatically recalculate velocity
-        # based on the new speed if the player is currently moving
-
-    def log_final_score(self):
-        """Log the final score with player name."""
-        logger.info("=== GAME OVER ===")
-        logger.info(f"Player: {self.game_state_manager.player_name}")
-        logger.info(f"Earned: ${self.score_tracker.earned}")
-        logger.info(f"Spent: ${self.score_tracker.spent}")
-        logger.info(f"Net Income: ${self.score_tracker.score}")
-        logger.info(f"Subway Usage: {self.score_tracker.subway_usage_count} times")
-        logger.info("================")
-
     @property
     def player(self) -> arcade.Sprite:
         """Get the player character."""
         return self._player
+
+    @property
+    def player_name(self) -> str:
+        """Get the player name."""
+        return self.game_state_manager.player_name
 
     @property
     def pizza_shops(self) -> Iterable[Location]:
@@ -148,6 +97,34 @@ class PizzaDeliveryGame(arcade.Window):
         """Get the subways."""
         return self._subways
 
+    def get_player_speed_multiplier(self):
+        """Get the speed multiplier based on player's current location in speed multiplier locations."""
+        for location in self._speed_multipler_locations:
+            # Check if player sprite collides with location sprite
+            if arcade.check_for_collision(self.player, location):
+                return location.player_speed_multiplier
+
+        # Default multiplier if not in any speed multiplier location
+        return 1.0
+
+    def update_player_speed(self):
+        """Update player speed based on current location."""
+        multiplier = self.get_player_speed_multiplier()
+        new_speed = DEFAULT_PLAYER_SPEED * multiplier
+        self.player.set_speed(new_speed)
+        # Note: The player's update() method will automatically recalculate velocity
+        # based on the new speed if the player is currently moving
+
+    def log_final_score(self):
+        """Log the final score with player name."""
+        logger.info("=== GAME OVER ===")
+        logger.info(f"Player: {self.player_name}")
+        logger.info(f"Earned: ${self.score_tracker.earned}")
+        logger.info(f"Spent: ${self.score_tracker.spent}")
+        logger.info(f"Net Income: ${self.score_tracker.score}")
+        logger.info(f"Subway Usage: {self.score_tracker.subway_usage_count} times")
+        logger.info("================")
+
     def generate_new_order(self):
         """Generate a new order and make it the current order."""
         self.current_order = Order.generate_order()
@@ -155,7 +132,7 @@ class PizzaDeliveryGame(arcade.Window):
             f"New order: Pickup from {self.current_order.pickup_location.name} at {self.current_order.pickup_location.avenue_street_address}, deliver to {self.current_order.delivery_location.avenue_street_address}"
         )
 
-    def get_current_order_location(self, is_pickup: bool = True) -> Location:
+    def get_current_destination_location(self, is_pickup: bool = True) -> Location:
         """Get the current pickup or delivery location for highlighting."""
         return (
             self.current_order.pickup_location
@@ -178,13 +155,13 @@ class PizzaDeliveryGame(arcade.Window):
 
             if not self.player.has_pizza:
                 # Player doesn't have pizza - highlight pickup location only
-                location = self.get_current_order_location(is_pickup=True)
+                location = self.get_current_destination_location(is_pickup=True)
                 arcade.draw_rect_outline(
                     location.arcade_rect, highlight_color, border_width=8
                 )
             else:
                 # Player has pizza - highlight delivery location only
-                location = self.get_current_order_location(is_pickup=False)
+                location = self.get_current_destination_location(is_pickup=False)
                 arcade.draw_rect_outline(
                     location.arcade_rect, highlight_color, border_width=8
                 )
@@ -202,6 +179,39 @@ class PizzaDeliveryGame(arcade.Window):
         arcade.draw_text(text, x, y, color, size, bold=bold)
         return y - (25 if bold else 20)
 
+    def draw_game_screen(self):
+        """Draw the normal game screen."""
+        # Draw Manhattan map first
+        draw_manhattan_grid()
+
+        # Draw all sprites with highlighting
+        for location in self.pizza_shops:
+            location.draw()
+        for location in self.homes:
+            location.draw()
+        for location in self.speed_multiplier_locations:
+            location.draw()
+        for location in self.subways:
+            location.draw()
+
+        # Draw highlighting for current order locations
+        self.draw_order_highlights()
+
+        # Draw player character
+        self.player.draw()
+
+        # Draw sidebar
+        self.draw_sidebar()
+
+        # Draw map labels
+        arcade.draw_text(
+            "Manhattan Pizza Delivery",
+            MAP_OFFSET_X,
+            MAP_OFFSET_Y + MAP_HEIGHT + 20,
+            arcade.color.BLACK,
+            20,
+        )
+
     def draw_sidebar(self):
         """Draw the sidebar with game information."""
         self._draw_sidebar_background()
@@ -212,7 +222,7 @@ class PizzaDeliveryGame(arcade.Window):
 
         # Draw player and financial information
         current_y = self._draw_sidebar_text(
-            f"Player: {self.game_state_manager.player_name}",
+            f"Player: {self.player_name}",
             sidebar_text_x,
             current_y,
             arcade.color.BLACK,
@@ -288,46 +298,13 @@ class PizzaDeliveryGame(arcade.Window):
             draw_game_instructions_dialog()
         elif self.game_state_manager.game_state == GameState.GAME_OVER:
             draw_final_score(
-                self.game_state_manager.player_name,
+                self.player_name,
                 self.score_tracker.earned,
                 self.score_tracker.spent,
                 self.score_tracker.score,
             )
         elif self.game_state_manager.game_state == GameState.ACTIVE_WITH_OVERLAY:
             draw_game_instructions_dialog(is_overlay=True)
-
-    def draw_game_screen(self):
-        """Draw the normal game screen."""
-        # Draw Manhattan map first
-        draw_manhattan_grid()
-
-        # Draw all sprites with highlighting
-        for location in self.pizza_shops:
-            location.draw()
-        for location in self.homes:
-            location.draw()
-        for location in self.speed_multiplier_locations:
-            location.draw()
-        for location in self.subways:
-            location.draw()
-
-        # Draw highlighting for current order locations
-        self.draw_order_highlights()
-
-        # Draw player character
-        self.player.draw()
-
-        # Draw sidebar
-        self.draw_sidebar()
-
-        # Draw map labels
-        arcade.draw_text(
-            "Manhattan Pizza Delivery",
-            MAP_OFFSET_X,
-            MAP_OFFSET_Y + MAP_HEIGHT + 20,
-            arcade.color.BLACK,
-            20,
-        )
 
     def on_update(self, delta_time):
         """Movement and game logic."""
@@ -352,7 +329,7 @@ class PizzaDeliveryGame(arcade.Window):
         # Check for pizza pickup using distance-based collision detection
         if not self.player.has_pizza:
             # Only allow pickup from the current order's pickup location
-            location = self.get_current_order_location(is_pickup=True)
+            location = self.get_current_destination_location(is_pickup=True)
             distance = arcade.get_distance_between_sprites(self.player, location)
             if distance < COLLISION_THRESHOLD:
                 self.player.has_pizza = True
@@ -362,7 +339,7 @@ class PizzaDeliveryGame(arcade.Window):
         # Check for pizza delivery using distance-based collision detection
         elif self.player.has_pizza:
             # Only allow delivery to the current order's delivery location
-            location = self.get_current_order_location(is_pickup=False)
+            location = self.get_current_destination_location(is_pickup=False)
             distance = arcade.get_distance_between_sprites(self.player, location)
             if distance < COLLISION_THRESHOLD:
                 self.player.has_pizza = False
@@ -405,7 +382,7 @@ class PizzaDeliveryGame(arcade.Window):
                 "No active order - can't determine destination for subway teleportation!"
             )
             return
-        destination = self.get_current_order_location(
+        destination = self.get_current_destination_location(
             is_pickup=not self.player.has_pizza
         )
         closest_subway = self.find_closest_subway_to_destination(destination)

@@ -9,7 +9,7 @@ from constants import (
 from logging_utils import get_logger
 
 # Import ScoreTracker from main module
-from main import ScoreTracker
+from score_tracker import ScoreTracker
 from session_manager import SessionManager
 
 # Initialize logger at module level
